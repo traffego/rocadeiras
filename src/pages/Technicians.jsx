@@ -5,12 +5,15 @@ import {
     Pencil,
     Trash2,
     UserCheck,
-    UserX
+    UserX,
+    Loader2
 } from 'lucide-react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { api } from '@/services/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
     Dialog,
@@ -27,35 +30,85 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-
-// Mock de técnicos
-const tecnicosMock = [
-    { id: '1', nome: 'Carlos Ferreira', ativo: true },
-    { id: '2', nome: 'Roberto Lima', ativo: true },
-    { id: '3', nome: 'José Santos', ativo: false },
-]
+import { toast } from 'sonner'
 
 export default function Technicians() {
     const [dialogOpen, setDialogOpen] = useState(false)
-    const [editingTecnico, setEditingTecnico] = useState(null)
-    const [nome, setNome] = useState('')
+    const [editingTechnician, setEditingTechnician] = useState(null)
+    const [name, setName] = useState('')
+
+    const queryClient = useQueryClient()
+
+    // Fetch Technicians
+    const { data: technicians = [], isLoading } = useQuery({
+        queryKey: ['technicians'],
+        queryFn: api.technicians.list
+    })
+
+    // Mutations
+    const createMutation = useMutation({
+        mutationFn: api.technicians.create,
+        onSuccess: () => {
+            queryClient.invalidateQueries(['technicians'])
+            setDialogOpen(false)
+            toast.success("Técnico cadastrado!")
+        },
+        onError: (e) => toast.error(e.message)
+    })
+
+    const updateMutation = useMutation({
+        mutationFn: ({ id, data }) => api.technicians.update(id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries(['technicians'])
+            setDialogOpen(false)
+            toast.success("Técnico atualizado!")
+        },
+        onError: (e) => toast.error(e.message)
+    })
+
+    const deleteMutation = useMutation({
+        mutationFn: api.technicians.delete,
+        onSuccess: () => {
+            queryClient.invalidateQueries(['technicians'])
+            toast.success("Técnico removido!")
+        },
+        onError: (e) => toast.error(e.message)
+    })
 
     const openNewDialog = () => {
-        setEditingTecnico(null)
-        setNome('')
+        setEditingTechnician(null)
+        setName('')
         setDialogOpen(true)
     }
 
-    const openEditDialog = (tecnico) => {
-        setEditingTecnico(tecnico)
-        setNome(tecnico.nome)
+    const openEditDialog = (tech) => {
+        setEditingTechnician(tech)
+        setName(tech.name)
         setDialogOpen(true)
     }
 
     const handleSubmit = () => {
-        console.log('Salvando técnico:', nome)
-        // TODO: Salvar no Supabase
-        setDialogOpen(false)
+        if (editingTechnician) {
+            updateMutation.mutate({ id: editingTechnician.id, data: { name } })
+        } else {
+            createMutation.mutate({ name })
+        }
+    }
+
+    const toggleStatus = (tech) => {
+        updateMutation.mutate({ id: tech.id, data: { active: !tech.active } })
+    }
+
+    const handleDelete = (id) => {
+        if (confirm('Tem certeza que deseja excluir?')) {
+            deleteMutation.mutate(id)
+        }
+    }
+
+    const isSaving = createMutation.isPending || updateMutation.isPending
+
+    if (isLoading) {
+        return <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>
     }
 
     return (
@@ -65,7 +118,7 @@ export default function Technicians() {
                 <div>
                     <h1 className="text-2xl font-bold">Técnicos</h1>
                     <p className="text-muted-foreground">
-                        {tecnicosMock.filter(t => t.ativo).length} técnicos ativos
+                        {technicians.filter(t => t.active).length} técnicos ativos
                     </p>
                 </div>
                 <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -78,21 +131,21 @@ export default function Technicians() {
                     <DialogContent>
                         <DialogHeader>
                             <DialogTitle>
-                                {editingTecnico ? 'Editar Técnico' : 'Novo Técnico'}
+                                {editingTechnician ? 'Editar Técnico' : 'Novo Técnico'}
                             </DialogTitle>
                             <DialogDescription>
-                                {editingTecnico
+                                {editingTechnician
                                     ? 'Atualize os dados do técnico'
                                     : 'Informe o nome do técnico'}
                             </DialogDescription>
                         </DialogHeader>
                         <div className="space-y-4 py-4">
                             <div className="space-y-2">
-                                <Label htmlFor="dialog-nome">Nome *</Label>
+                                <Label htmlFor="name">Nome *</Label>
                                 <Input
-                                    id="dialog-nome"
-                                    value={nome}
-                                    onChange={(e) => setNome(e.target.value)}
+                                    id="name"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
                                     placeholder="Nome do técnico"
                                 />
                             </div>
@@ -101,35 +154,36 @@ export default function Technicians() {
                             <Button variant="outline" onClick={() => setDialogOpen(false)}>
                                 Cancelar
                             </Button>
-                            <Button onClick={handleSubmit} disabled={!nome}>
-                                {editingTecnico ? 'Salvar' : 'Cadastrar'}
+                            <Button onClick={handleSubmit} disabled={!name || isSaving}>
+                                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                {editingTechnician ? 'Salvar' : 'Cadastrar'}
                             </Button>
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
             </div>
 
-            {/* Lista de técnicos */}
+            {/* List */}
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {tecnicosMock.map(tecnico => (
-                    <Card key={tecnico.id}>
+                {technicians.map(tech => (
+                    <Card key={tech.id}>
                         <CardHeader className="pb-2">
                             <div className="flex items-start justify-between">
                                 <div className="flex items-center gap-3">
                                     <div className={`
                     flex h-10 w-10 items-center justify-center rounded-full
-                    ${tecnico.ativo ? 'bg-primary/10' : 'bg-muted'}
+                    ${tech.active ? 'bg-primary/10' : 'bg-muted'}
                   `}>
-                                        {tecnico.ativo ? (
+                                        {tech.active ? (
                                             <UserCheck className="h-5 w-5 text-primary" />
                                         ) : (
                                             <UserX className="h-5 w-5 text-muted-foreground" />
                                         )}
                                     </div>
                                     <div>
-                                        <CardTitle className="text-lg">{tecnico.nome}</CardTitle>
-                                        <Badge variant={tecnico.ativo ? "default" : "secondary"}>
-                                            {tecnico.ativo ? 'Ativo' : 'Inativo'}
+                                        <CardTitle className="text-lg">{tech.name}</CardTitle>
+                                        <Badge variant={tech.active ? "default" : "secondary"}>
+                                            {tech.active ? 'Ativo' : 'Inativo'}
                                         </Badge>
                                     </div>
                                 </div>
@@ -140,12 +194,12 @@ export default function Technicians() {
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
-                                        <DropdownMenuItem onClick={() => openEditDialog(tecnico)}>
+                                        <DropdownMenuItem onClick={() => openEditDialog(tech)}>
                                             <Pencil className="mr-2 h-4 w-4" />
                                             Editar
                                         </DropdownMenuItem>
-                                        <DropdownMenuItem>
-                                            {tecnico.ativo ? (
+                                        <DropdownMenuItem onClick={() => toggleStatus(tech)}>
+                                            {tech.active ? (
                                                 <>
                                                     <UserX className="mr-2 h-4 w-4" />
                                                     Desativar
@@ -157,7 +211,7 @@ export default function Technicians() {
                                                 </>
                                             )}
                                         </DropdownMenuItem>
-                                        <DropdownMenuItem className="text-destructive">
+                                        <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(tech.id)}>
                                             <Trash2 className="mr-2 h-4 w-4" />
                                             Excluir
                                         </DropdownMenuItem>

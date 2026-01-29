@@ -8,8 +8,11 @@ import {
     Wrench,
     ClipboardCheck,
     Camera,
-    Save
+    Save,
+    Loader2
 } from 'lucide-react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { api } from '@/services/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -22,6 +25,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
+import { toast } from 'sonner'
+import { uploadToR2 } from '@/lib/r2'
 
 const steps = [
     { id: 1, name: 'Cliente', icon: User },
@@ -29,67 +34,122 @@ const steps = [
     { id: 3, name: 'Checklist', icon: ClipboardCheck },
 ]
 
-// Mock de clientes existentes
-const clientesMock = [
-    { id: '1', nome: 'João Silva', whatsapp: '11999999999' },
-    { id: '2', nome: 'Maria Santos', whatsapp: '11988888888' },
-    { id: '3', nome: 'Pedro Oliveira', whatsapp: '11977777777' },
-]
-
 export default function NewOrder() {
     const navigate = useNavigate()
     const [currentStep, setCurrentStep] = useState(1)
     const [isNewClient, setIsNewClient] = useState(false)
+    const [loading, setLoading] = useState(false)
+
+    const queryClient = useQueryClient()
+
+    // Fetch customers
+    const { data: customers = [] } = useQuery({
+        queryKey: ['customers'],
+        queryFn: api.customers.list
+    })
+
+    // Create Customer Mutation
+    const createCustomerMutation = useMutation({
+        mutationFn: api.customers.create
+    })
+
+    // Create Order Mutation
+    const createOrderMutation = useMutation({
+        mutationFn: api.orders.create,
+        onSuccess: (data) => {
+            queryClient.invalidateQueries(['orders'])
+            toast.success(`Ordem de serviço #${data.order_number} criada!`)
+            navigate('/')
+        },
+        onError: (e) => toast.error("Erro ao criar OS: " + e.message)
+    })
 
     const [formData, setFormData] = useState({
-        // Cliente
-        cliente_id: '',
-        cliente_nome: '',
-        cliente_whatsapp: '',
-        cliente_cpf: '',
-        cliente_endereco: '',
-        // Equipamento
-        equipamento_tipo: '',
-        equipamento_marca: '',
-        equipamento_modelo: '',
-        equipamento_serie: '',
-        defeito_relatado: '',
+        // Customer
+        customer_id: '',
+        customer_name: '',
+        customer_whatsapp: '',
+        customer_cpf: '',
+        customer_address: '',
+        // Equipment
+        equipment_type: '',
+        equipment_brand: '',
+        equipment_model: '',
+        equipment_serial: '',
+        reported_defect: '',
         // Checklist
-        maquina_liga: null,
-        exige_regulagem: null,
-        estava_parada: null,
-        tempo_parada_meses: '',
-        com_acessorios: null,
-        descricao_acessorios: '',
-        orcamento_autorizado: null,
-        // Fotos
-        fotos: []
+        machine_turns_on: null,
+        needs_adjustment: null,
+        was_stopped: null,
+        stopped_time_months: '',
+        has_accessories: null,
+        accessories_description: '',
+        budget_authorized: null,
+        // Files
+        files: []
     })
 
     const updateForm = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }))
     }
 
-    const handleSubmit = () => {
-        console.log('Dados da OS:', formData)
-        // TODO: Salvar no Supabase
-        alert('OS criada com sucesso!')
-        navigate('/')
+    const handleSubmit = async () => {
+        setLoading(true)
+        try {
+            let customerId = formData.customer_id
+
+            // If new client, create it first
+            if (isNewClient) {
+                const newCustomer = await createCustomerMutation.mutateAsync({
+                    name: formData.customer_name,
+                    whatsapp: formData.customer_whatsapp,
+                    cpf: formData.customer_cpf,
+                    address: formData.customer_address
+                })
+                customerId = newCustomer.id
+            }
+
+            // Create Order
+            const orderData = {
+                customer_id: customerId,
+                equipment_type: formData.equipment_type,
+                equipment_brand: formData.equipment_brand,
+                equipment_model: formData.equipment_model,
+                equipment_serial: formData.equipment_serial,
+                reported_defect: formData.reported_defect,
+                machine_turns_on: formData.machine_turns_on,
+                needs_adjustment: formData.needs_adjustment,
+                was_stopped: formData.was_stopped,
+                stopped_time_months: formData.stopped_time_months ? parseInt(formData.stopped_time_months) : null,
+                has_accessories: formData.has_accessories,
+                accessories_description: formData.accessories_description,
+                budget_authorized: formData.budget_authorized,
+                current_status: 'received'
+            }
+
+            await createOrderMutation.mutateAsync(orderData)
+
+        } catch (error) {
+            console.error(error)
+            toast.error("Erro ao processar: " + error.message)
+        } finally {
+            setLoading(false)
+        }
     }
 
     const canProceed = () => {
         switch (currentStep) {
             case 1:
                 if (isNewClient) {
-                    return formData.cliente_nome && formData.cliente_whatsapp
+                    return formData.customer_name && formData.customer_whatsapp
                 }
-                return formData.cliente_id
+                return formData.customer_id
             case 2:
-                return formData.equipamento_tipo && formData.equipamento_marca &&
-                    formData.equipamento_modelo && formData.defeito_relatado
+                return formData.equipment_type && formData.equipment_brand &&
+                    formData.equipment_model && formData.reported_defect
             case 3:
-                return formData.maquina_liga !== null && formData.estava_parada !== null &&
-                    formData.com_acessorios !== null && formData.orcamento_autorizado !== null
+                return formData.machine_turns_on !== null && formData.was_stopped !== null &&
+                    formData.has_accessories !== null && formData.budget_authorized !== null
             default:
                 return false
         }
@@ -138,7 +198,7 @@ export default function NewOrder() {
                 ))}
             </div>
 
-            {/* Step 1: Cliente */}
+            {/* Step 1: Customer */}
             {currentStep === 1 && (
                 <Card>
                     <CardHeader>
@@ -166,14 +226,14 @@ export default function NewOrder() {
                         {!isNewClient ? (
                             <div className="space-y-2">
                                 <Label>Selecionar Cliente</Label>
-                                <Select value={formData.cliente_id} onValueChange={(v) => updateForm('cliente_id', v)}>
+                                <Select value={formData.customer_id} onValueChange={(v) => updateForm('customer_id', v)}>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Escolha um cliente..." />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {clientesMock.map(cliente => (
-                                            <SelectItem key={cliente.id} value={cliente.id}>
-                                                {cliente.nome} • {cliente.whatsapp}
+                                        {customers.map(customer => (
+                                            <SelectItem key={customer.id} value={customer.id}>
+                                                {customer.name} • {customer.whatsapp}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
@@ -183,11 +243,11 @@ export default function NewOrder() {
                             <div className="space-y-4">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="nome">Nome *</Label>
+                                        <Label htmlFor="name">Nome *</Label>
                                         <Input
-                                            id="nome"
-                                            value={formData.cliente_nome}
-                                            onChange={(e) => updateForm('cliente_nome', e.target.value)}
+                                            id="name"
+                                            value={formData.customer_name}
+                                            onChange={(e) => updateForm('customer_name', e.target.value)}
                                             placeholder="Nome completo"
                                         />
                                     </div>
@@ -195,8 +255,8 @@ export default function NewOrder() {
                                         <Label htmlFor="whatsapp">WhatsApp *</Label>
                                         <Input
                                             id="whatsapp"
-                                            value={formData.cliente_whatsapp}
-                                            onChange={(e) => updateForm('cliente_whatsapp', e.target.value)}
+                                            value={formData.customer_whatsapp}
+                                            onChange={(e) => updateForm('customer_whatsapp', e.target.value)}
                                             placeholder="(11) 99999-9999"
                                         />
                                     </div>
@@ -206,17 +266,17 @@ export default function NewOrder() {
                                         <Label htmlFor="cpf">CPF (opcional)</Label>
                                         <Input
                                             id="cpf"
-                                            value={formData.cliente_cpf}
-                                            onChange={(e) => updateForm('cliente_cpf', e.target.value)}
+                                            value={formData.customer_cpf}
+                                            onChange={(e) => updateForm('customer_cpf', e.target.value)}
                                             placeholder="000.000.000-00"
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="endereco">Endereço (opcional)</Label>
+                                        <Label htmlFor="address">Endereço (opcional)</Label>
                                         <Input
-                                            id="endereco"
-                                            value={formData.cliente_endereco}
-                                            onChange={(e) => updateForm('cliente_endereco', e.target.value)}
+                                            id="address"
+                                            value={formData.customer_address}
+                                            onChange={(e) => updateForm('customer_address', e.target.value)}
                                             placeholder="Rua, número, bairro"
                                         />
                                     </div>
@@ -227,7 +287,7 @@ export default function NewOrder() {
                 </Card>
             )}
 
-            {/* Step 2: Equipamento */}
+            {/* Step 2: Equipment */}
             {currentStep === 2 && (
                 <Card>
                     <CardHeader>
@@ -237,7 +297,7 @@ export default function NewOrder() {
                     <CardContent className="space-y-4">
                         <div className="space-y-2">
                             <Label>Tipo de Equipamento *</Label>
-                            <Select value={formData.equipamento_tipo} onValueChange={(v) => updateForm('equipamento_tipo', v)}>
+                            <Select value={formData.equipment_type} onValueChange={(v) => updateForm('equipment_type', v)}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Selecione o tipo..." />
                                 </SelectTrigger>
@@ -251,41 +311,41 @@ export default function NewOrder() {
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label htmlFor="marca">Marca *</Label>
+                                <Label htmlFor="brand">Marca *</Label>
                                 <Input
-                                    id="marca"
-                                    value={formData.equipamento_marca}
-                                    onChange={(e) => updateForm('equipamento_marca', e.target.value)}
+                                    id="brand"
+                                    value={formData.equipment_brand}
+                                    onChange={(e) => updateForm('equipment_brand', e.target.value)}
                                     placeholder="Ex: Stihl, Husqvarna, Makita"
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="modelo">Modelo *</Label>
+                                <Label htmlFor="model">Modelo *</Label>
                                 <Input
-                                    id="modelo"
-                                    value={formData.equipamento_modelo}
-                                    onChange={(e) => updateForm('equipamento_modelo', e.target.value)}
+                                    id="model"
+                                    value={formData.equipment_model}
+                                    onChange={(e) => updateForm('equipment_model', e.target.value)}
                                     placeholder="Ex: FS 220, 450"
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="serie">Número de Série (opcional)</Label>
+                            <Label htmlFor="serial">Número de Série (opcional)</Label>
                             <Input
-                                id="serie"
-                                value={formData.equipamento_serie}
-                                onChange={(e) => updateForm('equipamento_serie', e.target.value)}
+                                id="serial"
+                                value={formData.equipment_serial}
+                                onChange={(e) => updateForm('equipment_serial', e.target.value)}
                                 placeholder="Número de série do equipamento"
                             />
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="defeito">Defeito Relatado *</Label>
+                            <Label htmlFor="defect">Defeito Relatado *</Label>
                             <Textarea
-                                id="defeito"
-                                value={formData.defeito_relatado}
-                                onChange={(e) => updateForm('defeito_relatado', e.target.value)}
+                                id="defect"
+                                value={formData.reported_defect}
+                                onChange={(e) => updateForm('reported_defect', e.target.value)}
                                 placeholder="Descreva o problema relatado pelo cliente..."
                                 rows={3}
                             />
@@ -302,47 +362,47 @@ export default function NewOrder() {
                         <CardDescription>Verifique as condições de chegada do equipamento</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
-                        {/* A máquina liga? */}
+                        {/* Machine Turns On? */}
                         <div className="space-y-3">
                             <Label>A máquina liga? *</Label>
                             <div className="flex gap-2">
                                 <Button
                                     type="button"
-                                    variant={formData.maquina_liga === true ? "default" : "outline"}
-                                    onClick={() => updateForm('maquina_liga', true)}
+                                    variant={formData.machine_turns_on === true ? "default" : "outline"}
+                                    onClick={() => updateForm('machine_turns_on', true)}
                                     className="flex-1"
                                 >
                                     Sim
                                 </Button>
                                 <Button
                                     type="button"
-                                    variant={formData.maquina_liga === false ? "default" : "outline"}
+                                    variant={formData.machine_turns_on === false ? "default" : "outline"}
                                     onClick={() => {
-                                        updateForm('maquina_liga', false)
-                                        updateForm('exige_regulagem', null)
+                                        updateForm('machine_turns_on', false)
+                                        updateForm('needs_adjustment', null)
                                     }}
                                     className="flex-1"
                                 >
                                     Não
                                 </Button>
                             </div>
-                            {formData.maquina_liga === true && (
+                            {formData.machine_turns_on === true && (
                                 <div className="ml-4 pt-2 space-y-2">
                                     <Label>Exige regulagem?</Label>
                                     <div className="flex gap-2">
                                         <Button
                                             type="button"
                                             size="sm"
-                                            variant={formData.exige_regulagem === true ? "default" : "outline"}
-                                            onClick={() => updateForm('exige_regulagem', true)}
+                                            variant={formData.needs_adjustment === true ? "default" : "outline"}
+                                            onClick={() => updateForm('needs_adjustment', true)}
                                         >
                                             Sim
                                         </Button>
                                         <Button
                                             type="button"
                                             size="sm"
-                                            variant={formData.exige_regulagem === false ? "default" : "outline"}
-                                            onClick={() => updateForm('exige_regulagem', false)}
+                                            variant={formData.needs_adjustment === false ? "default" : "outline"}
+                                            onClick={() => updateForm('needs_adjustment', false)}
                                         >
                                             Não
                                         </Button>
@@ -351,39 +411,39 @@ export default function NewOrder() {
                             )}
                         </div>
 
-                        {/* Estava parada? */}
+                        {/* Was Stopped? */}
                         <div className="space-y-3">
                             <Label>Estava parada? *</Label>
                             <div className="flex gap-2">
                                 <Button
                                     type="button"
-                                    variant={formData.estava_parada === true ? "default" : "outline"}
-                                    onClick={() => updateForm('estava_parada', true)}
+                                    variant={formData.was_stopped === true ? "default" : "outline"}
+                                    onClick={() => updateForm('was_stopped', true)}
                                     className="flex-1"
                                 >
                                     Sim
                                 </Button>
                                 <Button
                                     type="button"
-                                    variant={formData.estava_parada === false ? "default" : "outline"}
+                                    variant={formData.was_stopped === false ? "default" : "outline"}
                                     onClick={() => {
-                                        updateForm('estava_parada', false)
-                                        updateForm('tempo_parada_meses', '')
+                                        updateForm('was_stopped', false)
+                                        updateForm('stopped_time_months', '')
                                     }}
                                     className="flex-1"
                                 >
                                     Não
                                 </Button>
                             </div>
-                            {formData.estava_parada === true && (
+                            {formData.was_stopped === true && (
                                 <div className="ml-4 pt-2">
-                                    <Label htmlFor="tempo_parada">Tempo parada (meses)</Label>
+                                    <Label htmlFor="stopped_time">Tempo parada (meses)</Label>
                                     <Input
-                                        id="tempo_parada"
+                                        id="stopped_time"
                                         type="number"
                                         min="1"
-                                        value={formData.tempo_parada_meses}
-                                        onChange={(e) => updateForm('tempo_parada_meses', e.target.value)}
+                                        value={formData.stopped_time_months}
+                                        onChange={(e) => updateForm('stopped_time_months', e.target.value)}
                                         placeholder="Ex: 3"
                                         className="w-32 mt-1"
                                     />
@@ -391,37 +451,37 @@ export default function NewOrder() {
                             )}
                         </div>
 
-                        {/* Com acessórios? */}
+                        {/* Has Accessories? */}
                         <div className="space-y-3">
                             <Label>Está com acessórios? *</Label>
                             <div className="flex gap-2">
                                 <Button
                                     type="button"
-                                    variant={formData.com_acessorios === true ? "default" : "outline"}
-                                    onClick={() => updateForm('com_acessorios', true)}
+                                    variant={formData.has_accessories === true ? "default" : "outline"}
+                                    onClick={() => updateForm('has_accessories', true)}
                                     className="flex-1"
                                 >
                                     Sim
                                 </Button>
                                 <Button
                                     type="button"
-                                    variant={formData.com_acessorios === false ? "default" : "outline"}
+                                    variant={formData.has_accessories === false ? "default" : "outline"}
                                     onClick={() => {
-                                        updateForm('com_acessorios', false)
-                                        updateForm('descricao_acessorios', '')
+                                        updateForm('has_accessories', false)
+                                        updateForm('accessories_description', '')
                                     }}
                                     className="flex-1"
                                 >
                                     Não
                                 </Button>
                             </div>
-                            {formData.com_acessorios === true && (
+                            {formData.has_accessories === true && (
                                 <div className="ml-4 pt-2">
-                                    <Label htmlFor="acessorios">Descrever acessórios</Label>
+                                    <Label htmlFor="accessories">Descrever acessórios</Label>
                                     <Input
-                                        id="acessorios"
-                                        value={formData.descricao_acessorios}
-                                        onChange={(e) => updateForm('descricao_acessorios', e.target.value)}
+                                        id="accessories"
+                                        value={formData.accessories_description}
+                                        onChange={(e) => updateForm('accessories_description', e.target.value)}
                                         placeholder="Ex: 2 lâminas, cinto, protetor"
                                         className="mt-1"
                                     />
@@ -429,22 +489,22 @@ export default function NewOrder() {
                             )}
                         </div>
 
-                        {/* Orçamento autorizado? */}
+                        {/* Budget Authorized? */}
                         <div className="space-y-3">
                             <Label>Orçamento autorizado inicialmente? *</Label>
                             <div className="flex gap-2">
                                 <Button
                                     type="button"
-                                    variant={formData.orcamento_autorizado === true ? "default" : "outline"}
-                                    onClick={() => updateForm('orcamento_autorizado', true)}
+                                    variant={formData.budget_authorized === true ? "default" : "outline"}
+                                    onClick={() => updateForm('budget_authorized', true)}
                                     className="flex-1"
                                 >
                                     Sim
                                 </Button>
                                 <Button
                                     type="button"
-                                    variant={formData.orcamento_autorizado === false ? "default" : "outline"}
-                                    onClick={() => updateForm('orcamento_autorizado', false)}
+                                    variant={formData.budget_authorized === false ? "default" : "outline"}
+                                    onClick={() => updateForm('budget_authorized', false)}
                                     className="flex-1"
                                 >
                                     Não
@@ -452,16 +512,12 @@ export default function NewOrder() {
                             </div>
                         </div>
 
-                        {/* Fotos de entrada */}
+                        {/* Entry Files */}
                         <div className="space-y-3 pt-4 border-t">
                             <Label>Fotos de Entrada</Label>
                             <p className="text-sm text-muted-foreground">
-                                Tire fotos do equipamento na chegada para registro
+                                Tire fotos do equipamento na chegada para registro. (Será habilitado na tela de detalhes)
                             </p>
-                            <Button variant="outline" className="w-full">
-                                <Camera className="mr-2 h-4 w-4" />
-                                Adicionar Fotos
-                            </Button>
                         </div>
                     </CardContent>
                 </Card>
@@ -472,7 +528,7 @@ export default function NewOrder() {
                 <Button
                     variant="outline"
                     onClick={() => setCurrentStep(prev => prev - 1)}
-                    disabled={currentStep === 1}
+                    disabled={currentStep === 1 || loading}
                 >
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Voltar
@@ -489,9 +545,9 @@ export default function NewOrder() {
                 ) : (
                     <Button
                         onClick={handleSubmit}
-                        disabled={!canProceed()}
+                        disabled={!canProceed() || loading}
                     >
-                        <Save className="mr-2 h-4 w-4" />
+                        {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Criar OS
                     </Button>
                 )}

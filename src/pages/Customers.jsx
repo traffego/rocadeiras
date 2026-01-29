@@ -6,8 +6,11 @@ import {
     MoreHorizontal,
     Pencil,
     Trash2,
-    ClipboardList
+    ClipboardList,
+    Loader2
 } from 'lucide-react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { api } from '@/services/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -27,57 +30,105 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-
-// Mock de clientes
-const clientesMock = [
-    { id: '1', nome: 'João Silva', whatsapp: '11999999999', cpf: '123.456.789-00', endereco: 'Rua das Flores, 123', totalOS: 5 },
-    { id: '2', nome: 'Maria Santos', whatsapp: '11988888888', cpf: '', endereco: 'Av. Principal, 456', totalOS: 3 },
-    { id: '3', nome: 'Pedro Oliveira', whatsapp: '11977777777', cpf: '987.654.321-00', endereco: '', totalOS: 8 },
-    { id: '4', nome: 'Ana Costa', whatsapp: '11966666666', cpf: '', endereco: 'Rua Nova, 789', totalOS: 1 },
-]
+import { toast } from "sonner"
 
 export default function Customers() {
-    const [busca, setBusca] = useState('')
+    const [search, setSearch] = useState('')
     const [dialogOpen, setDialogOpen] = useState(false)
-    const [editingCliente, setEditingCliente] = useState(null)
+    const [editingCustomer, setEditingCustomer] = useState(null)
+
     const [formData, setFormData] = useState({
-        nome: '',
+        name: '',
         whatsapp: '',
         cpf: '',
-        endereco: ''
+        address: ''
     })
 
-    const clientesFiltrados = clientesMock.filter(cliente =>
-        cliente.nome.toLowerCase().includes(busca.toLowerCase()) ||
-        cliente.whatsapp.includes(busca)
+    const queryClient = useQueryClient()
+
+    // Fetch Customers
+    const { data: customers = [], isLoading } = useQuery({
+        queryKey: ['customers'],
+        queryFn: api.customers.list
+    })
+
+    // Create Mutation
+    const createMutation = useMutation({
+        mutationFn: api.customers.create,
+        onSuccess: () => {
+            queryClient.invalidateQueries(['customers'])
+            setDialogOpen(false)
+            toast.success("Cliente cadastrado com sucesso!")
+        },
+        onError: (error) => toast.error("Erro ao cadastrar: " + error.message)
+    })
+
+    // Update Mutation
+    const updateMutation = useMutation({
+        mutationFn: ({ id, data }) => api.customers.update(id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries(['customers'])
+            setDialogOpen(false)
+            toast.success("Cliente atualizado!")
+        },
+        onError: (error) => toast.error("Erro ao atualizar: " + error.message)
+    })
+
+    // Delete Mutation
+    const deleteMutation = useMutation({
+        mutationFn: api.customers.delete,
+        onSuccess: () => {
+            queryClient.invalidateQueries(['customers'])
+            toast.success("Cliente removido!")
+        },
+        onError: (error) => toast.error("Erro ao remover: " + error.message)
+    })
+
+    const filteredCustomers = customers.filter(c =>
+        c.name.toLowerCase().includes(search.toLowerCase()) ||
+        c.whatsapp.includes(search)
     )
 
     const openNewDialog = () => {
-        setEditingCliente(null)
-        setFormData({ nome: '', whatsapp: '', cpf: '', endereco: '' })
+        setEditingCustomer(null)
+        setFormData({ name: '', whatsapp: '', cpf: '', address: '' })
         setDialogOpen(true)
     }
 
-    const openEditDialog = (cliente) => {
-        setEditingCliente(cliente)
+    const openEditDialog = (customer) => {
+        setEditingCustomer(customer)
         setFormData({
-            nome: cliente.nome,
-            whatsapp: cliente.whatsapp,
-            cpf: cliente.cpf,
-            endereco: cliente.endereco
+            name: customer.name,
+            whatsapp: customer.whatsapp,
+            cpf: customer.cpf || '',
+            address: customer.address || ''
         })
         setDialogOpen(true)
     }
 
     const handleSubmit = () => {
-        console.log('Salvando cliente:', formData)
-        // TODO: Salvar no Supabase
-        setDialogOpen(false)
+        if (editingCustomer) {
+            updateMutation.mutate({ id: editingCustomer.id, data: formData })
+        } else {
+            createMutation.mutate(formData)
+        }
+    }
+
+    const handleDelete = (id) => {
+        if (confirm('Tem certeza que deseja excluir este cliente?')) {
+            deleteMutation.mutate(id)
+        }
     }
 
     const handleWhatsAppClick = (whatsapp) => {
-        const numero = whatsapp.replace(/\D/g, '')
-        window.open(`https://wa.me/55${numero}`, '_blank')
+        const number = whatsapp.replace(/\D/g, '')
+        window.open(`https://wa.me/55${number}`, '_blank')
+    }
+
+    const isSaving = createMutation.isPending || updateMutation.isPending
+
+    if (isLoading) {
+        return <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>
     }
 
     return (
@@ -87,7 +138,7 @@ export default function Customers() {
                 <div>
                     <h1 className="text-2xl font-bold">Clientes</h1>
                     <p className="text-muted-foreground">
-                        {clientesMock.length} clientes cadastrados
+                        {customers.length} clientes cadastrados
                     </p>
                 </div>
                 <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -100,48 +151,48 @@ export default function Customers() {
                     <DialogContent>
                         <DialogHeader>
                             <DialogTitle>
-                                {editingCliente ? 'Editar Cliente' : 'Novo Cliente'}
+                                {editingCustomer ? 'Editar Cliente' : 'Novo Cliente'}
                             </DialogTitle>
                             <DialogDescription>
-                                {editingCliente
+                                {editingCustomer
                                     ? 'Atualize os dados do cliente'
                                     : 'Preencha os dados para cadastrar um novo cliente'}
                             </DialogDescription>
                         </DialogHeader>
                         <div className="space-y-4 py-4">
                             <div className="space-y-2">
-                                <Label htmlFor="dialog-nome">Nome *</Label>
+                                <Label htmlFor="name">Nome *</Label>
                                 <Input
-                                    id="dialog-nome"
-                                    value={formData.nome}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, nome: e.target.value }))}
+                                    id="name"
+                                    value={formData.name}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                                     placeholder="Nome completo"
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="dialog-whatsapp">WhatsApp *</Label>
+                                <Label htmlFor="whatsapp">WhatsApp *</Label>
                                 <Input
-                                    id="dialog-whatsapp"
+                                    id="whatsapp"
                                     value={formData.whatsapp}
                                     onChange={(e) => setFormData(prev => ({ ...prev, whatsapp: e.target.value }))}
                                     placeholder="(11) 99999-9999"
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="dialog-cpf">CPF (opcional)</Label>
+                                <Label htmlFor="cpf">CPF (opcional)</Label>
                                 <Input
-                                    id="dialog-cpf"
+                                    id="cpf"
                                     value={formData.cpf}
                                     onChange={(e) => setFormData(prev => ({ ...prev, cpf: e.target.value }))}
                                     placeholder="000.000.000-00"
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="dialog-endereco">Endereço (opcional)</Label>
+                                <Label htmlFor="address">Endereço (opcional)</Label>
                                 <Input
-                                    id="dialog-endereco"
-                                    value={formData.endereco}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, endereco: e.target.value }))}
+                                    id="address"
+                                    value={formData.address}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
                                     placeholder="Rua, número, bairro"
                                 />
                             </div>
@@ -150,39 +201,40 @@ export default function Customers() {
                             <Button variant="outline" onClick={() => setDialogOpen(false)}>
                                 Cancelar
                             </Button>
-                            <Button onClick={handleSubmit} disabled={!formData.nome || !formData.whatsapp}>
-                                {editingCliente ? 'Salvar' : 'Cadastrar'}
+                            <Button onClick={handleSubmit} disabled={!formData.name || !formData.whatsapp || isSaving}>
+                                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                {editingCustomer ? 'Salvar' : 'Cadastrar'}
                             </Button>
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
             </div>
 
-            {/* Busca */}
+            {/* Search */}
             <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                     placeholder="Buscar por nome ou WhatsApp..."
-                    value={busca}
-                    onChange={(e) => setBusca(e.target.value)}
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
                     className="pl-10"
                 />
             </div>
 
-            {/* Lista de clientes */}
+            {/* List */}
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {clientesFiltrados.length === 0 ? (
+                {filteredCustomers.length === 0 ? (
                     <Card className="col-span-full">
                         <CardContent className="py-8 text-center text-muted-foreground">
                             Nenhum cliente encontrado.
                         </CardContent>
                     </Card>
                 ) : (
-                    clientesFiltrados.map(cliente => (
-                        <Card key={cliente.id}>
+                    filteredCustomers.map(customer => (
+                        <Card key={customer.id}>
                             <CardHeader className="pb-2">
                                 <div className="flex items-start justify-between">
-                                    <CardTitle className="text-lg">{cliente.nome}</CardTitle>
+                                    <CardTitle className="text-lg">{customer.name}</CardTitle>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                             <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -190,11 +242,11 @@ export default function Customers() {
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
-                                            <DropdownMenuItem onClick={() => openEditDialog(cliente)}>
+                                            <DropdownMenuItem onClick={() => openEditDialog(customer)}>
                                                 <Pencil className="mr-2 h-4 w-4" />
                                                 Editar
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem className="text-destructive">
+                                            <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(customer.id)}>
                                                 <Trash2 className="mr-2 h-4 w-4" />
                                                 Excluir
                                             </DropdownMenuItem>
@@ -207,21 +259,21 @@ export default function Customers() {
                                     variant="outline"
                                     size="sm"
                                     className="w-full justify-start text-green-600 hover:text-green-700"
-                                    onClick={() => handleWhatsAppClick(cliente.whatsapp)}
+                                    onClick={() => handleWhatsAppClick(customer.whatsapp)}
                                 >
                                     <Phone className="mr-2 h-4 w-4" />
-                                    {cliente.whatsapp}
+                                    {customer.whatsapp}
                                 </Button>
 
-                                {cliente.endereco && (
+                                {customer.address && (
                                     <p className="text-sm text-muted-foreground">
-                                        {cliente.endereco}
+                                        {customer.address}
                                     </p>
                                 )}
 
                                 <div className="flex items-center gap-2 pt-2 text-sm text-muted-foreground">
                                     <ClipboardList className="h-4 w-4" />
-                                    {cliente.totalOS} {cliente.totalOS === 1 ? 'ordem de serviço' : 'ordens de serviço'}
+                                    Visualizar Histórico
                                 </div>
                             </CardContent>
                         </Card>

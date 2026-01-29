@@ -4,10 +4,12 @@ import {
     PlusCircle,
     Users,
     Wrench,
-    Menu
+    Menu,
+    LogOut
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useState } from 'react'
+import { useAuth } from '@/lib/auth'
 
 const navigation = [
     { name: 'Dashboard', href: '/', icon: ClipboardList },
@@ -18,6 +20,7 @@ const navigation = [
 
 export default function Layout() {
     const [sidebarOpen, setSidebarOpen] = useState(false)
+    const { signOut } = useAuth()
 
     return (
         <div className="min-h-screen bg-background">
@@ -71,7 +74,15 @@ export default function Layout() {
                     </nav>
 
                     {/* Footer */}
-                    <div className="px-4 py-4 border-t">
+                    <div className="px-4 py-4 border-t space-y-4">
+                        <Button
+                            variant="outline"
+                            className="w-full justify-start text-muted-foreground"
+                            onClick={() => signOut()}
+                        >
+                            <LogOut className="mr-2 h-4 w-4" />
+                            Sair do Sistema
+                        </Button>
                         <p className="text-xs text-muted-foreground text-center">
                             v1.0.0 • Roçadeiras
                         </p>

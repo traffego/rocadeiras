@@ -9,56 +9,30 @@ import {
     Search,
     Upload,
     FileText,
-    DollarSign
+    DollarSign,
+    Loader2
 } from 'lucide-react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { api } from '@/services/api'
+import { uploadToR2 } from '@/lib/r2'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Textarea } from '@/components/ui/textarea'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { uploadToR2 } from '@/lib/r2'
+import { toast } from 'sonner'
 
-// Mock Data
-const mockOS = {
-    id: '1',
-    numero_os: 1,
-    cliente: { nome: 'João Silva', whatsapp: '11999999999' },
-    equipamento: {
-        tipo: 'rocadeira',
-        marca: 'Stihl',
-        modelo: 'FS 220',
-        serie: 'X123456'
-    },
-    defeito_relatado: 'Não liga, estava parada há 3 meses',
-    checklist: {
-        maquina_liga: false,
-        estava_parada: true,
-        tempo_parada_meses: 3,
-        com_acessorios: true,
-        descricao_acessorios: 'Lâmina e cinto'
-    },
-    etapa_atual: 'orcamento',
-    historico: [
-        { etapa: 'recebida', data: '2024-01-28 10:00', obs: 'Recebida na bancada' },
-        { etapa: 'analise', data: '2024-01-28 14:00', obs: 'Carburador sujo' }
-    ],
-    fotos: [
-        { id: 1, url: 'https://placehold.co/300x200?text=Chegada', etapa: 'recebida', legenda: 'Chegada' }
-    ]
-}
+const statusFlow = ['received', 'analysis', 'budget', 'washing', 'assembly', 'testing', 'pickup', 'finished']
 
-const etapasFlow = ['recebida', 'analise', 'orcamento', 'lavagem', 'montagem', 'teste', 'entrega', 'finalizada']
-
-const etapasConfig = {
-    recebida: { label: 'Recebida', color: 'bg-gray-500', icon: Clock },
-    analise: { label: 'Análise', color: 'bg-blue-500', icon: Search },
-    orcamento: { label: 'Orçamento', color: 'bg-yellow-500', icon: AlertCircle },
-    lavagem: { label: 'Lavagem', color: 'bg-cyan-500', icon: Clock },
-    montagem: { label: 'Montagem', color: 'bg-purple-500', icon: Clock },
-    teste: { label: 'Teste', color: 'bg-green-500', icon: CheckCircle2 },
-    entrega: { label: 'Entrega', color: 'bg-emerald-500', icon: CheckCircle2 },
-    finalizada: { label: 'Finalizada', color: 'bg-gray-400', icon: CheckCircle2 },
+const statusConfig = {
+    received: { label: 'Recebida', color: 'bg-gray-500', icon: Clock },
+    analysis: { label: 'Análise', color: 'bg-blue-500', icon: Search },
+    budget: { label: 'Orçamento', color: 'bg-yellow-500', icon: AlertCircle },
+    washing: { label: 'Lavagem', color: 'bg-cyan-500', icon: Clock },
+    assembly: { label: 'Montagem', color: 'bg-purple-500', icon: Clock },
+    testing: { label: 'Teste', color: 'bg-green-500', icon: CheckCircle2 },
+    pickup: { label: 'Entrega', color: 'bg-emerald-500', icon: CheckCircle2 },
+    finished: { label: 'Finalizada', color: 'bg-gray-400', icon: CheckCircle2 },
 }
 
 export default function OrderDetail() {
@@ -66,54 +40,68 @@ export default function OrderDetail() {
     const navigate = useNavigate()
     const fileInputRef = useRef(null)
 
-    // State
-    const [os, setOs] = useState(mockOS) // In real app, fetch from Supabase
-    const [loading, setLoading] = useState(false)
+    const [loadingUpload, setLoadingUpload] = useState(false)
     const [obs, setObs] = useState('')
 
-    const currentStepIndex = etapasFlow.indexOf(os.etapa_atual)
-    const nextStep = etapasFlow[currentStepIndex + 1]
+    const queryClient = useQueryClient()
+
+    const { data: order, isLoading } = useQuery({
+        queryKey: ['order', id],
+        queryFn: () => api.orders.getById(id)
+    })
+
+    // Update mutation
+    const updateOrderMutation = useMutation({
+        mutationFn: (updates) => api.orders.update(id, updates),
+        onSuccess: () => {
+            queryClient.invalidateQueries(['order', id])
+            toast.success("Ordem atualizada!")
+        },
+        onError: (e) => toast.error(e.message)
+    })
+
+    // File Mutation
+    const addFileMutation = useMutation({
+        mutationFn: api.files.create,
+        onSuccess: () => {
+            queryClient.invalidateQueries(['order', id])
+            toast.success("Arquivo enviado!")
+        }
+    })
+
+    if (isLoading || !order) {
+        return <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>
+    }
+
+    const currentStepIndex = statusFlow.indexOf(order.current_status)
+    const nextStep = statusFlow[currentStepIndex + 1]
 
     const handleAdvanceStep = () => {
         if (!nextStep) return
-
-        // TODO: Update in Supabase
-        setOs(prev => ({
-            ...prev,
-            etapa_atual: nextStep,
-            historico: [
-                ...prev.historico,
-                { etapa: nextStep, data: new Date().toISOString(), obs: obs || 'Mudança de etapa' }
-            ]
-        }))
-        setObs('')
+        updateOrderMutation.mutate({ current_status: nextStep })
     }
 
     const handleFileUpload = async (e) => {
         const file = e.target.files[0]
         if (!file) return
 
-        setLoading(true)
+        setLoadingUpload(true)
         try {
             const result = await uploadToR2(file)
             if (result.success) {
-                setOs(prev => ({
-                    ...prev,
-                    fotos: [
-                        ...prev.fotos,
-                        {
-                            id: Date.now(),
-                            url: result.url,
-                            etapa: os.etapa_atual,
-                            legenda: `Foto ${etapasConfig[os.etapa_atual].label}`
-                        }
-                    ]
-                }))
+                await addFileMutation.mutateAsync({
+                    service_order_id: id,
+                    url: result.url,
+                    step: order.current_status,
+                    type: file.type.startsWith('video') ? 'video' : 'photo',
+                    caption: `Foto ${statusConfig[order.current_status].label}`
+                })
             }
         } catch (error) {
             console.error('Erro upload', error)
+            toast.error("Erro no upload")
         } finally {
-            setLoading(false)
+            setLoadingUpload(false)
         }
     }
 
@@ -127,21 +115,22 @@ export default function OrderDetail() {
                     </Button>
                     <div>
                         <div className="flex items-center gap-2">
-                            <h1 className="text-2xl font-bold">OS #{os.numero_os.toString().padStart(4, '0')}</h1>
-                            <Badge className={etapasConfig[os.etapa_atual].color}>
-                                {etapasConfig[os.etapa_atual].label}
+                            <h1 className="text-2xl font-bold">OS #{order.order_number.toString().padStart(4, '0')}</h1>
+                            <Badge className={statusConfig[order.current_status].color}>
+                                {statusConfig[order.current_status].label}
                             </Badge>
                         </div>
                         <p className="text-muted-foreground">
-                            {os.cliente.nome} • {os.equipamento.tipo} {os.equipamento.modelo}
+                            {order.customer?.name} • {order.equipment_type} {order.equipment_model}
                         </p>
                     </div>
                 </div>
 
                 {nextStep && (
                     <div className="flex items-center gap-2">
-                        <Button onClick={handleAdvanceStep}>
-                            Avançar para {etapasConfig[nextStep]?.label}
+                        <Button onClick={handleAdvanceStep} disabled={updateOrderMutation.isPending}>
+                            {updateOrderMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                            Avançar para {statusConfig[nextStep]?.label}
                             <CheckCircle2 className="ml-2 h-4 w-4" />
                         </Button>
                     </div>
@@ -161,13 +150,13 @@ export default function OrderDetail() {
                             <div className="relative">
                                 <div className="absolute top-0 bottom-0 left-[19px] w-0.5 bg-muted" />
                                 <div className="space-y-6">
-                                    {etapasFlow.map((etapa, index) => {
+                                    {statusFlow.map((step, index) => {
                                         const isCompleted = index <= currentStepIndex
                                         const isCurrent = index === currentStepIndex
-                                        const config = etapasConfig[etapa]
+                                        const config = statusConfig[step]
 
                                         return (
-                                            <div key={etapa} className="relative flex items-center gap-4">
+                                            <div key={step} className="relative flex items-center gap-4">
                                                 <div className={`
                           relative z-10 flex h-10 w-10 items-center justify-center rounded-full border-2 
                           ${isCompleted
@@ -180,12 +169,6 @@ export default function OrderDetail() {
                                                     <p className={`font-medium ${isCurrent ? 'text-primary' : ''}`}>
                                                         {config.label}
                                                     </p>
-                                                    {/* Show timestamp if exists in history */}
-                                                    {isCompleted && (
-                                                        <p className="text-xs text-muted-foreground">
-                                                            {os.historico.find(h => h.etapa === etapa)?.data || 'Concluído'}
-                                                        </p>
-                                                    )}
                                                 </div>
                                             </div>
                                         )
@@ -203,7 +186,7 @@ export default function OrderDetail() {
                         <CardContent>
                             <div className="flex gap-2">
                                 <Textarea
-                                    placeholder="Adicione observações sobre o serviço..."
+                                    placeholder="Adicione observações sobre o serviço... (Funcionalidade futura)"
                                     value={obs}
                                     onChange={(e) => setObs(e.target.value)}
                                 />
@@ -222,18 +205,18 @@ export default function OrderDetail() {
                         </CardHeader>
                         <CardContent className="text-sm space-y-2">
                             <div>
-                                <span className="font-medium">Marca:</span> {os.equipamento.marca}
+                                <span className="font-medium">Marca:</span> {order.equipment_brand}
                             </div>
                             <div>
-                                <span className="font-medium">Modelo:</span> {os.equipamento.modelo}
+                                <span className="font-medium">Modelo:</span> {order.equipment_model}
                             </div>
                             <div>
-                                <span className="font-medium">Série:</span> {os.equipamento.serie || 'N/A'}
+                                <span className="font-medium">Série:</span> {order.equipment_serial || 'N/A'}
                             </div>
                             <Separator className="my-2" />
                             <div>
                                 <span className="font-medium">Defeito:</span>
-                                <p className="text-muted-foreground mt-1">{os.defeito_relatado}</p>
+                                <p className="text-muted-foreground mt-1">{order.reported_defect}</p>
                             </div>
                         </CardContent>
                     </Card>
@@ -246,25 +229,25 @@ export default function OrderDetail() {
                         <CardContent className="text-sm space-y-2">
                             <div className="flex justify-between">
                                 <span>Liga?</span>
-                                <Badge variant={os.checklist.maquina_liga ? "default" : "destructive"}>
-                                    {os.checklist.maquina_liga ? 'Sim' : 'Não'}
+                                <Badge variant={order.machine_turns_on ? "default" : "destructive"}>
+                                    {order.machine_turns_on ? 'Sim' : 'Não'}
                                 </Badge>
                             </div>
                             <div className="flex justify-between">
                                 <span>Parada?</span>
                                 <Badge variant="outline">
-                                    {os.checklist.estava_parada ? `${os.checklist.tempo_parada_meses} meses` : 'Não'}
+                                    {order.was_stopped ? `${order.stopped_time_months} meses` : 'Não'}
                                 </Badge>
                             </div>
                             <div className="flex justify-between">
                                 <span>Acessórios?</span>
                                 <Badge variant="outline">
-                                    {os.checklist.com_acessorios ? 'Sim' : 'Não'}
+                                    {order.has_accessories ? 'Sim' : 'Não'}
                                 </Badge>
                             </div>
-                            {os.checklist.com_acessorios && (
+                            {order.has_accessories && (
                                 <p className="text-xs text-muted-foreground bg-muted p-2 rounded">
-                                    {os.checklist.descricao_acessorios}
+                                    {order.accessories_description}
                                 </p>
                             )}
                         </CardContent>
@@ -274,8 +257,8 @@ export default function OrderDetail() {
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
                             <CardTitle className="text-base">Fotos e Vídeos</CardTitle>
-                            <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()}>
-                                <Upload className="h-4 w-4" />
+                            <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={loadingUpload}>
+                                {loadingUpload ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
                             </Button>
                             <input
                                 type="file"
@@ -287,11 +270,11 @@ export default function OrderDetail() {
                         </CardHeader>
                         <CardContent>
                             <div className="grid grid-cols-2 gap-2">
-                                {os.fotos.map(foto => (
-                                    <div key={foto.id} className="relative aspect-square rounded-md overflow-hidden border">
-                                        <img src={foto.url} alt={foto.legenda} className="object-cover w-full h-full" />
+                                {order.files?.map(file => (
+                                    <div key={file.id} className="relative aspect-square rounded-md overflow-hidden border">
+                                        <img src={file.url} alt={file.caption} className="object-cover w-full h-full" />
                                         <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] p-1 truncate">
-                                            {foto.legenda}
+                                            {file.caption}
                                         </div>
                                     </div>
                                 ))}

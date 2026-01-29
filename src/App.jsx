@@ -1,16 +1,26 @@
 import { Routes, Route } from 'react-router-dom'
 import { Toaster } from '@/components/ui/sonner'
+import { AuthProvider } from '@/lib/auth'
+import { ProtectedRoute } from '@/components/ProtectedRoute'
 import Layout from './components/Layout'
+import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import NewOrder from './pages/NewOrder'
 import Customers from './pages/Customers'
+import Technicians from './pages/Technicians'
 import OrderDetail from './pages/OrderDetail'
 
 function App() {
   return (
-    <>
+    <AuthProvider>
       <Routes>
-        <Route path="/" element={<Layout />}>
+        <Route path="/login" element={<Login />} />
+
+        <Route path="/" element={
+          <ProtectedRoute>
+            <Layout />
+          </ProtectedRoute>
+        }>
           <Route index element={<Dashboard />} />
           <Route path="os/new" element={<NewOrder />} />
           <Route path="customers" element={<Customers />} />
@@ -19,7 +29,7 @@ function App() {
         </Route>
       </Routes>
       <Toaster />
-    </>
+    </AuthProvider>
   )
 }
 
