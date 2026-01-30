@@ -19,7 +19,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/services/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Plus, X, GripVertical, AlertCircle, Loader2, Wrench } from 'lucide-react'
+import { Plus, X, GripVertical, AlertCircle, Loader2, Wrench, ZoomIn, ZoomOut } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
@@ -216,6 +216,7 @@ export default function Kanban() {
     const [activeDragItem, setActiveDragItem] = useState(null)
     const [newColumnName, setNewColumnName] = useState('')
     const [isDialogOpen, setIsDialogOpen] = useState(false)
+    const [zoom, setZoom] = useState(1)
 
     // Data Fetching
     const { data: columns = [], isLoading: loadingColumns } = useQuery({
@@ -375,13 +376,40 @@ export default function Kanban() {
                 </Dialog>
             </div>
 
+            <div className="flex justify-end gap-2 px-2 mb-2">
+                <div className="flex items-center gap-2 bg-muted/50 p-1 rounded-lg">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setZoom(z => Math.max(0.5, z - 0.1))}
+                        disabled={zoom <= 0.5}
+                    >
+                        <ZoomOut className="h-4 w-4" />
+                    </Button>
+                    <span className="text-xs font-medium w-8 text-center">{Math.round(zoom * 100)}%</span>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setZoom(z => Math.min(1.5, z + 0.1))}
+                        disabled={zoom >= 1.5}
+                    >
+                        <ZoomIn className="h-4 w-4" />
+                    </Button>
+                </div>
+            </div>
+
             <DndContext
                 sensors={sensors}
                 collisionDetection={closestCorners}
                 onDragStart={onDragStart}
                 onDragEnd={onDragEnd}
             >
-                <div className="flex gap-4 overflow-x-auto h-full pb-4 px-2 items-start">
+                <div
+                    className="flex gap-4 overflow-x-auto h-full pb-4 px-2 items-start"
+                    style={{ zoom: zoom }}
+                >
                     <SortableContext items={columnsId} strategy={horizontalListSortingStrategy}>
                         {columns.map(col => (
                             <SortableColumn
@@ -398,16 +426,18 @@ export default function Kanban() {
                 {/* Drag Overlay for smooth visual */}
                 <DragOverlay>
                     {activeDragItem && (
-                        activeDragItem.slug ? (
-                            <div className="bg-muted w-[350px] h-[500px] rounded-lg border-2 border-primary shadow-xl opacity-90 flex items-center justify-center font-bold text-lg">
-                                {activeDragItem.title}
-                            </div>
-                        ) : (
-                            <div className="bg-background p-3 rounded-lg border shadow-xl w-[300px]">
-                                <p className="font-bold text-sm text-primary">#{activeDragItem.order_number}</p>
-                                <p className="font-medium text-sm">{activeDragItem.customer?.name}</p>
-                            </div>
-                        )
+                        <div style={{ zoom: zoom }}>
+                            {activeDragItem.slug ? (
+                                <div className="bg-muted w-[350px] h-[500px] rounded-lg border-2 border-primary shadow-xl opacity-90 flex items-center justify-center font-bold text-lg">
+                                    {activeDragItem.title}
+                                </div>
+                            ) : (
+                                <div className="bg-background p-3 rounded-lg border shadow-xl w-[300px]">
+                                    <p className="font-bold text-sm text-primary">#{activeDragItem.order_number}</p>
+                                    <p className="font-medium text-sm">{activeDragItem.customer?.name}</p>
+                                </div>
+                            )}
+                        </div>
                     )}
                 </DragOverlay>
             </DndContext>
