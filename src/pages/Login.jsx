@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuth } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -77,11 +77,17 @@ export default function Login() {
                             />
                         </div>
                     </CardContent>
-                    <CardFooter>
+                    <CardFooter className="flex flex-col gap-3">
                         <Button className="w-full" type="submit" disabled={loading}>
                             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Entrar
                         </Button>
+                        <Link
+                            to="/forgot-password"
+                            className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                        >
+                            Esqueci minha senha
+                        </Link>
                     </CardFooter>
                 </form>
             </Card>
