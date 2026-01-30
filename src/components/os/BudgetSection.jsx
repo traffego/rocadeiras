@@ -29,11 +29,18 @@ export default function BudgetSection({ orderId }) {
     const queryClient = useQueryClient()
     const [newItem, setNewItem] = useState({ description: '', price: '', code: '' })
     const [isAdding, setIsAdding] = useState(false)
+    const [localLabor, setLocalLabor] = useState(null)
 
     // Fetch Budget
     const { data: budget, isLoading } = useQuery({
         queryKey: ['budget', orderId],
-        queryFn: () => api.budgets.getByOrderId(orderId)
+        queryFn: async () => {
+            const data = await api.budgets.getByOrderId(orderId)
+            if (data && localLabor === null) {
+                setLocalLabor(data.labor_cost)
+            }
+            return data
+        }
     })
 
     // Fetch Parts Catalog
@@ -92,7 +99,8 @@ export default function BudgetSection({ orderId }) {
     }
 
     const itemsTotal = budget.items?.reduce((acc, item) => acc + Number(item.price), 0) || 0
-    const total = itemsTotal + Number(budget.labor_cost)
+    const currentLabor = localLabor !== null ? Number(localLabor) : Number(budget.labor_cost)
+    const total = itemsTotal + currentLabor
 
     const handleAddItem = (e) => {
         e.preventDefault()
@@ -117,8 +125,10 @@ export default function BudgetSection({ orderId }) {
         }
     }
 
-    const updateLabor = (val) => {
-        updateBudgetMutation.mutate({ labor_cost: Number(val) })
+    const handleLaborBlur = () => {
+        if (localLabor !== budget?.labor_cost) {
+            updateBudgetMutation.mutate({ labor_cost: Number(localLabor) || 0 })
+        }
     }
 
     const updateStatus = (status) => {
@@ -230,8 +240,9 @@ export default function BudgetSection({ orderId }) {
                                 type="number"
                                 step="0.01"
                                 className="w-32 text-right font-bold"
-                                value={budget.labor_cost}
-                                onChange={e => updateLabor(e.target.value)}
+                                value={localLabor ?? budget.labor_cost ?? 0}
+                                onChange={e => setLocalLabor(e.target.value)}
+                                onBlur={handleLaborBlur}
                                 disabled={budget.status !== 'pending'}
                             />
                         </div>
