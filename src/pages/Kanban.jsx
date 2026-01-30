@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import {
     DndContext,
     DragOverlay,
@@ -19,7 +19,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/services/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Plus, X, GripVertical, AlertCircle, Loader2, Wrench, ZoomIn, ZoomOut } from 'lucide-react'
+import { Plus, X, GripVertical, AlertCircle, Loader2, Wrench, ZoomIn, ZoomOut, Scan } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
@@ -102,7 +102,6 @@ function SortableColumn({ column, orders, columns, onMove, onDelete, onUpdateTit
                         <SortableTask
                             key={order.id}
                             order={order}
-                            columns={columns}
                             columns={columns}
                             onMove={onMove}
                             zoom={zoom}
@@ -231,6 +230,23 @@ export default function Kanban() {
     const [newColumnName, setNewColumnName] = useState('')
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [zoom, setZoom] = useState(1)
+    const scrollContainerRef = useRef(null)
+
+    // Helper to fit columns to screen
+    function handleFitToScreen() {
+        if (!scrollContainerRef.current || columns.length === 0) return
+
+        const containerWidth = scrollContainerRef.current.clientWidth
+        // 350px column width + 16px (1rem) gap. 
+        // We add a little padding buffer (e.g. 50px) to be safe.
+        const requiredWidth = columns.length * 366
+
+        const newZoom = Math.min(1, (containerWidth - 40) / requiredWidth) // -40 for padding
+        // Clamp zoom between reasonable limits (e.g. 0.3 to 1) 
+        // We might want to allow > 1 if few columns, but usually "See All" implies shrinking to fit.
+        // Let's sticking to shrinking or resetting to 1 if it fits easily.
+        setZoom(Math.max(0.3, newZoom))
+    }
 
     // Data Fetching
     const { data: columns = [], isLoading: loadingColumns } = useQuery({
@@ -411,6 +427,18 @@ export default function Kanban() {
                     >
                         <ZoomIn className="h-4 w-4" />
                     </Button>
+
+                    <div className="w-px h-4 bg-border mx-1" />
+
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 text-xs px-2 gap-1"
+                        onClick={handleFitToScreen}
+                    >
+                        <Scan className="h-3 w-3" />
+                        Ver todas
+                    </Button>
                 </div>
             </div>
 
@@ -421,6 +449,7 @@ export default function Kanban() {
                 onDragEnd={onDragEnd}
             >
                 <div
+                    ref={scrollContainerRef}
                     className="flex gap-4 overflow-x-auto h-full pb-4 px-2 items-start"
                     style={{ zoom: zoom }}
                 >
@@ -430,7 +459,6 @@ export default function Kanban() {
                                 key={col.slug}
                                 column={col}
                                 orders={orders.filter(o => o.current_status === col.slug)}
-                                columns={columns}
                                 columns={columns}
                                 onMove={(orderId, newStatus) => updateOrderStatusMutation.mutate({ orderId, newStatus })}
                                 zoom={zoom}
