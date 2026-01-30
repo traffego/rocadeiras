@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/services/api'
 import {
@@ -34,14 +34,15 @@ export default function BudgetSection({ orderId }) {
     // Fetch Budget
     const { data: budget, isLoading } = useQuery({
         queryKey: ['budget', orderId],
-        queryFn: async () => {
-            const data = await api.budgets.getByOrderId(orderId)
-            if (data && localLabor === null) {
-                setLocalLabor(data.labor_cost)
-            }
-            return data
-        }
+        queryFn: () => api.budgets.getByOrderId(orderId)
     })
+
+    // Sync local labor cost once budget is loaded
+    useEffect(() => {
+        if (budget && localLabor === null) {
+            setLocalLabor(budget.labor_cost)
+        }
+    }, [budget, localLabor])
 
     // Fetch Parts Catalog
     const { data: parts = [] } = useQuery({

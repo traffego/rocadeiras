@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { supabase } from '@/lib/supabase'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
     ArrowLeft,
@@ -115,7 +116,7 @@ export default function OrderDetail() {
                 url: result.url,
                 step: order.current_status,
                 type: file.type.startsWith('video') ? 'video' : 'photo',
-                caption: `Upload ${statusConfig[order.current_status].label}`,
+                caption: `Upload ${statusConfig[order.current_status]?.label || order.current_status}`,
                 storage_path: result.path,
                 storage_provider: result.provider
             })
