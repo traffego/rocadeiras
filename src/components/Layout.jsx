@@ -38,7 +38,7 @@ export default function Layout() {
                 >
                     <Menu className="h-6 w-6" />
                 </Button>
-                <h1 className="font-bold text-lg">Sistema OS</h1>
+                <h1 className="font-bold text-lg">ZMAQ</h1>
             </div>
 
             {/* Sidebar */}
@@ -53,7 +53,7 @@ export default function Layout() {
                             <Wrench className="h-6 w-6 text-primary-foreground" />
                         </div>
                         <div>
-                            <h1 className="font-bold text-lg">Sistema OS</h1>
+                            <h1 className="font-bold text-lg">ZMAQ</h1>
                             <p className="text-xs text-muted-foreground">Oficina de Máquinas</p>
                         </div>
                     </div>
@@ -89,7 +89,7 @@ export default function Layout() {
                             Sair do Sistema
                         </Button>
                         <p className="text-xs text-muted-foreground text-center">
-                            v1.0.0 • Roçadeiras
+                            v1.0.0 • ZMAQ
                         </p>
                     </div>
                 </div>

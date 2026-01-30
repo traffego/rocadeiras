@@ -98,8 +98,8 @@ export default function Login() {
                     </form>
 
                     <p className="px-8 text-center text-sm text-muted-foreground">
-                        Sistema de Gestão de <br className="hidden sm:inline" />
-                        Máquinas Agrícolas e Equipamentos
+                        <span className="font-semibold text-primary">ZMAQ</span> <br className="hidden sm:inline" />
+                        Gestão de Máquinas Agrícolas
                     </p>
                 </div>
             </div>
