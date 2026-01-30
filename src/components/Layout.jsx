@@ -7,18 +7,21 @@ import {
     Menu,
     LogOut,
     Layout as LayoutIcon,
-    Package
+    Package,
+    Sun,
+    Moon,
+    Palette
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useState } from 'react'
 import { useTheme } from '@/components/theme-provider'
-import { Sun, Moon, Palette } from 'lucide-react'
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useAuth } from '@/lib/auth'
 
 const navigation = [
     { name: 'Dashboard', href: '/', icon: ClipboardList },
@@ -97,7 +100,6 @@ export default function Layout() {
                             Sair do Sistema
                         </Button>
 
-
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline" className="w-full justify-start text-muted-foreground">
@@ -125,17 +127,15 @@ export default function Layout() {
                         </p>
                     </div>
                 </div>
-            </aside >
+            </aside>
 
             {/* Overlay */}
-            {
-                sidebarOpen && (
-                    <div
-                        className="fixed inset-0 z-30 bg-black/50 lg:hidden"
-                        onClick={() => setSidebarOpen(false)}
-                    />
-                )
-            }
+            {sidebarOpen && (
+                <div
+                    className="fixed inset-0 z-30 bg-black/50 lg:hidden"
+                    onClick={() => setSidebarOpen(false)}
+                />
+            )}
 
             {/* Main content */}
             <main className="lg:pl-64 pt-16 lg:pt-0">
@@ -143,6 +143,6 @@ export default function Layout() {
                     <Outlet />
                 </div>
             </main>
-        </div >
+        </div>
     )
 }
