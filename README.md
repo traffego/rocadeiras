@@ -13,6 +13,8 @@ Currently, two official plugins are available:
 - ✅ Fluxo de Recuperação de Senha
 - ⬜ Câmera e Compressão de Imagens (Planejado)
 
+<!-- Trigger deploy: mudança para branch main -->
+
 ## React Compiler
 
 The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
