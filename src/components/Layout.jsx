@@ -11,9 +11,14 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useState } from 'react'
-import { useAuth } from '@/lib/auth'
 import { useTheme } from '@/components/theme-provider'
-import { Sun, Moon } from 'lucide-react'
+import { Sun, Moon, Palette } from 'lucide-react'
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 const navigation = [
     { name: 'Dashboard', href: '/', icon: ClipboardList },
@@ -91,35 +96,54 @@ export default function Layout() {
                             <LogOut className="mr-2 h-4 w-4" />
                             Sair do Sistema
                         </Button>
-                        <Button
-                            variant="outline"
-                            className="w-full justify-start text-muted-foreground"
-                            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                        >
-                            {theme === 'dark' ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
-                            {theme === 'dark' ? 'Modo Claro' : 'Modo Escuro'}
-                        </Button>
-                        <p className="text-xs text-muted-foreground text-center">
-                            v1.0.0 • ZMAQ
-                        </p>
-                    </div>
-                </div>
-            </aside>
+                        Sair do Sistema
+                    </Button>
 
-            {/* Overlay */}
-            {sidebarOpen && (
-                <div
-                    className="fixed inset-0 z-30 bg-black/50 lg:hidden"
-                    onClick={() => setSidebarOpen(false)}
-                />
-            )}
-
-            {/* Main content */}
-            <main className="lg:pl-64 pt-16 lg:pt-0">
-                <div className="p-6">
-                    <Outlet />
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className="w-full justify-start text-muted-foreground">
+                                <Palette className="mr-2 h-4 w-4" />
+                                Tema: {theme === 'dark' ? 'Escuro' : theme === 'navy' ? 'Marinho' : 'Claro'}
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56">
+                            <DropdownMenuItem onClick={() => setTheme("light")}>
+                                <Sun className="mr-2 h-4 w-4" />
+                                Claro
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setTheme("dark")}>
+                                <Moon className="mr-2 h-4 w-4" />
+                                Escuro
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setTheme("navy")}>
+                                <Palette className="mr-2 h-4 w-4 text-blue-500" />
+                                Marinho
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                    <p className="text-xs text-muted-foreground text-center">
+                        v1.0.0 • ZMAQ
+                    </p>
                 </div>
-            </main>
         </div>
+            </aside >
+
+        {/* Overlay */ }
+    {
+        sidebarOpen && (
+            <div
+                className="fixed inset-0 z-30 bg-black/50 lg:hidden"
+                onClick={() => setSidebarOpen(false)}
+            />
+        )
+    }
+
+    {/* Main content */ }
+    <main className="lg:pl-64 pt-16 lg:pt-0">
+        <div className="p-6">
+            <Outlet />
+        </div>
+    </main>
+        </div >
     )
 }

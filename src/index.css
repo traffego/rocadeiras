@@ -113,6 +113,45 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+.navy {
+  /* Navy Blue Theme - Sóbrio e Marinho */
+  --background: oklch(0.25 0.04 260); /* Fundo azul marinho escuro */
+  --foreground: oklch(0.95 0.01 260); /* Texto claro quase branco */
+  
+  --card: oklch(0.3 0.05 260); /* Cartões um pouco mais claros */
+  --card-foreground: oklch(0.98 0 0);
+  
+  --popover: oklch(0.3 0.05 260);
+  --popover-foreground: oklch(0.98 0 0);
+  
+  --primary: oklch(0.6 0.15 250); /* Azul vibrante mas sóbrio para destaque */
+  --primary-foreground: oklch(0.98 0 0);
+  
+  --secondary: oklch(0.4 0.08 260);
+  --secondary-foreground: oklch(0.98 0 0);
+  
+  --muted: oklch(0.35 0.06 260);
+  --muted-foreground: oklch(0.75 0.05 260);
+  
+  --accent: oklch(0.35 0.06 260);
+  --accent-foreground: oklch(0.98 0 0);
+  
+  --destructive: oklch(0.577 0.245 27.325); /* Mantido padrão para erros */
+  
+  --border: oklch(0.4 0.05 260);
+  --input: oklch(0.4 0.05 260);
+  --ring: oklch(0.6 0.15 250);
+  
+  --sidebar: oklch(0.25 0.04 260);
+  --sidebar-foreground: oklch(0.95 0.01 260);
+  --sidebar-primary: oklch(0.6 0.15 250);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.35 0.06 260);
+  --sidebar-accent-foreground: oklch(0.98 0 0);
+  --sidebar-border: oklch(0.4 0.05 260);
+  --sidebar-ring: oklch(0.6 0.15 250);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
