@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/select"
 import { toast } from 'sonner'
 import { uploadToR2 } from '@/lib/r2'
+import { EQUIPMENT_BRANDS } from '@/data/equipmentData'
 
 const steps = [
     { id: 1, name: 'Cliente', icon: User },
@@ -320,21 +321,46 @@ export default function NewOrder() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="brand">Marca *</Label>
-                                <Input
-                                    id="brand"
+                                <Select
                                     value={formData.equipment_brand}
-                                    onChange={(e) => updateForm('equipment_brand', e.target.value)}
-                                    placeholder="Ex: Stihl, Husqvarna, Makita"
-                                />
+                                    onValueChange={(v) => {
+                                        updateForm('equipment_brand', v)
+                                        updateForm('equipment_model', '') // Reset model when brand changes
+                                    }}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Selecione a marca..." />
+                                    </SelectTrigger>
+                                    <SelectContent className="h-64">
+                                        {EQUIPMENT_BRANDS.map(brand => (
+                                            <SelectItem key={brand.name} value={brand.name}>
+                                                {brand.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="model">Modelo *</Label>
-                                <Input
-                                    id="model"
+                                <Select
                                     value={formData.equipment_model}
-                                    onChange={(e) => updateForm('equipment_model', e.target.value)}
-                                    placeholder="Ex: FS 220, 450"
-                                />
+                                    onValueChange={(v) => updateForm('equipment_model', v)}
+                                    disabled={!formData.equipment_brand}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder={!formData.equipment_brand ? "Selecione a marca primeiro" : "Selecione o modelo..."} />
+                                    </SelectTrigger>
+                                    <SelectContent className="h-64">
+                                        {formData.equipment_brand && EQUIPMENT_BRANDS
+                                            .find(b => b.name === formData.equipment_brand)
+                                            ?.models.map(model => (
+                                                <SelectItem key={model} value={model}>
+                                                    {model}
+                                                </SelectItem>
+                                            ))
+                                        }
+                                    </SelectContent>
+                                </Select>
                             </div>
                         </div>
 
