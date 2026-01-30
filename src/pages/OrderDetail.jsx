@@ -17,6 +17,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/services/api'
 import { storage } from '@/services/storage'
+import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import BudgetSection from '@/components/os/BudgetSection'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -62,9 +63,10 @@ export default function OrderDetail() {
 
     const queryClient = useQueryClient()
 
-    const { data: order, isLoading } = useQuery({
+    const { data: order, isLoading, isError, error } = useQuery({
         queryKey: ['order', id],
-        queryFn: () => api.orders.getById(id)
+        queryFn: () => api.orders.getById(id),
+        retry: false
     })
 
     const { data: technicians = [] } = useQuery({
@@ -91,8 +93,23 @@ export default function OrderDetail() {
         }
     })
 
-    if (isLoading || !order) {
+    if (isLoading) {
         return <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>
+    }
+
+    if (isError) {
+        return (
+            <div className="flex flex-col items-center justify-center p-8 text-center">
+                <AlertCircle className="h-12 w-12 text-destructive mb-4" />
+                <h2 className="text-xl font-bold mb-2">Erro ao carregar ordem de serviço</h2>
+                <p className="text-muted-foreground mb-4">{error?.message || "Erro desconhecido"}</p>
+                <Button variant="outline" onClick={() => navigate('/os')}>Voltar para Lista</Button>
+            </div>
+        )
+    }
+
+    if (!order) {
+        return <div className="flex justify-center p-8">Ordem não encontrada</div>
     }
 
     const currentStepIndex = statusFlow.indexOf(order.current_status || 'received')
