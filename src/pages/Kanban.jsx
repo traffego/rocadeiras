@@ -25,10 +25,19 @@ import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
 import { CSS } from '@dnd-kit/utilities'
 import { useSortable } from '@dnd-kit/sortable'
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { MoreVertical } from 'lucide-react'
 
 // --- Internal Components ---
 
-function SortableColumn({ column, orders, onDelete, onUpdateTitle }) {
+function SortableColumn({ column, orders, columns, onMove, onDelete, onUpdateTitle }) {
     const {
         setNodeRef,
         attributes,
@@ -88,7 +97,12 @@ function SortableColumn({ column, orders, onDelete, onUpdateTitle }) {
             <div className="flex-1 p-2 overflow-y-auto space-y-2">
                 <SortableContext items={orders.map(o => o.id)} strategy={verticalListSortingStrategy}>
                     {orders.map(order => (
-                        <SortableTask key={order.id} order={order} />
+                        <SortableTask
+                            key={order.id}
+                            order={order}
+                            columns={columns}
+                            onMove={onMove}
+                        />
                     ))}
                 </SortableContext>
             </div>
@@ -96,7 +110,7 @@ function SortableColumn({ column, orders, onDelete, onUpdateTitle }) {
     )
 }
 
-function SortableTask({ order }) {
+function SortableTask({ order, columns, onMove }) {
     const navigate = useNavigate()
     const {
         setNodeRef,
@@ -144,10 +158,41 @@ function SortableTask({ order }) {
             className="bg-background p-3 rounded-lg border shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing group relative"
         >
             <div className="flex justify-between items-start mb-2">
-                <span className="font-bold text-sm text-primary">#{order.order_number}</span>
-                <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                    {new Date(order.entry_date).toLocaleDateString('pt-BR')}
-                </span>
+                <div className="flex items-center gap-2">
+                    <span className="font-bold text-sm text-primary">#{order.order_number}</span>
+                    <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                        {new Date(order.entry_date).toLocaleDateString('pt-BR')}
+                    </span>
+                </div>
+
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 -mr-2 -mt-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={(e) => e.stopPropagation()} // Prevent card click
+                        >
+                            <MoreVertical className="h-4 w-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Mover para...</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        {columns.map(col => (
+                            <DropdownMenuItem
+                                key={col.slug}
+                                disabled={order.current_status === col.slug}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onMove(order.id, col.slug);
+                                }}
+                            >
+                                {col.title}
+                            </DropdownMenuItem>
+                        ))}
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </div>
 
             <p className="font-medium text-sm line-clamp-1">{order.customer?.name}</p>
@@ -343,6 +388,8 @@ export default function Kanban() {
                                 key={col.slug}
                                 column={col}
                                 orders={orders.filter(o => o.current_status === col.slug)}
+                                columns={columns}
+                                onMove={(orderId, newStatus) => updateOrderStatusMutation.mutate({ orderId, newStatus })}
                             />
                         ))}
                     </SortableContext>
