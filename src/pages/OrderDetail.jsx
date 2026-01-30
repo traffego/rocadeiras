@@ -35,10 +35,17 @@ const statusConfig = {
     finished: { label: 'Finalizada', color: 'bg-gray-400', icon: CheckCircle2 },
 }
 
+const equipmentTypeConfig = {
+    brush_cutter: 'Roçadeira',
+    chainsaw: 'Motosserra',
+    sprayer: 'Pulverizador'
+}
+
 export default function OrderDetail() {
     const { id } = useParams()
     const navigate = useNavigate()
     const fileInputRef = useRef(null)
+
 
     const [loadingUpload, setLoadingUpload] = useState(false)
     const [obs, setObs] = useState('')
@@ -121,7 +128,7 @@ export default function OrderDetail() {
                             </Badge>
                         </div>
                         <p className="text-muted-foreground">
-                            {order.customer?.name} • {order.equipment_type} {order.equipment_model}
+                            {order.customer?.name} • {equipmentTypeConfig[order.equipment_type] || order.equipment_type} {order.equipment_model}
                         </p>
                     </div>
                 </div>

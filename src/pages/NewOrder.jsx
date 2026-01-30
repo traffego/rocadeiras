@@ -302,9 +302,9 @@ export default function NewOrder() {
                                     <SelectValue placeholder="Selecione o tipo..." />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="rocadeira">Roçadeira</SelectItem>
-                                    <SelectItem value="motosserra">Motosserra</SelectItem>
-                                    <SelectItem value="pulverizador">Pulverizador</SelectItem>
+                                    <SelectItem value="brush_cutter">Roçadeira</SelectItem>
+                                    <SelectItem value="chainsaw">Motosserra</SelectItem>
+                                    <SelectItem value="sprayer">Pulverizador</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>

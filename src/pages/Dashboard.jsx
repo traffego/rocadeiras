@@ -193,7 +193,9 @@ export default function Dashboard() {
                                             </div>
                                             <div className="text-sm text-muted-foreground">
                                                 {order.equipment_brand} {order.equipment_model}
-                                                {order.equipment_type === 'rocadeira' && ' (Roçadeira)'}
+                                                {order.equipment_type === 'brush_cutter' && ' (Roçadeira)'}
+                                                {order.equipment_type === 'chainsaw' && ' (Motosserra)'}
+                                                {order.equipment_type === 'sprayer' && ' (Pulverizador)'}
                                             </div>
                                         </div>
 
