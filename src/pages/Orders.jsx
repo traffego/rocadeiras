@@ -65,7 +65,7 @@ export default function Orders() {
         return orders.filter(order => {
             const matchesSearch =
                 (order.customer?.name || '').toLowerCase().includes(search.toLowerCase()) ||
-                order.order_number.toString().includes(search) ||
+                (order.order_number?.toString() || '').includes(search) ||
                 (order.equipment_model || '').toLowerCase().includes(search.toLowerCase()) ||
                 (order.equipment_brand || '').toLowerCase().includes(search.toLowerCase())
 
@@ -144,7 +144,7 @@ export default function Orders() {
                                 ) : (
                                     filteredOrders.map((order) => (
                                         <TableRow key={order.id} className="hover:bg-muted/50">
-                                            <TableCell className="font-bold">#{order.order_number}</TableCell>
+                                            <TableCell className="font-bold">#{order.order_number || '---'}</TableCell>
                                             <TableCell>
                                                 <div className="font-medium">{order.customer?.name}</div>
                                             </TableCell>
@@ -176,7 +176,7 @@ export default function Orders() {
                                             <TableCell>
                                                 <div className="flex items-center gap-2 text-sm">
                                                     <Calendar className="h-3 w-3 text-muted-foreground" />
-                                                    {new Date(order.entry_date).toLocaleDateString('pt-BR')}
+                                                    {order.entry_date ? new Date(order.entry_date).toLocaleDateString('pt-BR') : '---'}
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-right">
