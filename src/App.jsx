@@ -10,6 +10,7 @@ import NewOrder from './pages/NewOrder'
 import Customers from './pages/Customers'
 import Technicians from './pages/Technicians'
 import OrderDetail from './pages/OrderDetail'
+import Orders from './pages/Orders'
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
           </ProtectedRoute>
         }>
           <Route index element={<Dashboard />} />
+          <Route path="os" element={<Orders />} />
           <Route path="kanban" element={<Kanban />} />
           <Route path="os/new" element={<NewOrder />} />
           <Route path="customers" element={<Customers />} />

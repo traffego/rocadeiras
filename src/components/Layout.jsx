@@ -14,6 +14,7 @@ import { useAuth } from '@/lib/auth'
 
 const navigation = [
     { name: 'Dashboard', href: '/', icon: ClipboardList },
+    { name: 'Listagem de OS', href: '/os', icon: ClipboardList },
     { name: 'Kanban', href: '/kanban', icon: LayoutIcon },
     { name: 'Nova OS', href: '/os/new', icon: PlusCircle },
     { name: 'Clientes', href: '/customers', icon: Users },
