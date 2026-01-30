@@ -93,6 +93,20 @@ export default function OrderDetail() {
         }
     })
 
+    const deleteFileMutation = useMutation({
+        mutationFn: async (file) => {
+            if (file.storage_path) {
+                await storage.delete(file.storage_path, file.storage_provider)
+            }
+            const { error } = await supabase.from('files').delete().eq('id', file.id)
+            if (error) throw error
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(['order', id])
+            toast.success("Arquivo removido")
+        }
+    })
+
     if (isLoading) {
         return <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>
     }
@@ -163,19 +177,7 @@ export default function OrderDetail() {
         }
     }
 
-    const deleteFileMutation = useMutation({
-        mutationFn: async (file) => {
-            if (file.storage_path) {
-                await storage.delete(file.storage_path, file.storage_provider)
-            }
-            const { error } = await supabase.from('files').delete().eq('id', file.id)
-            if (error) throw error
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries(['order', id])
-            toast.success("Arquivo removido")
-        }
-    })
+
 
     return (
         <div className="max-w-4xl mx-auto space-y-6">
