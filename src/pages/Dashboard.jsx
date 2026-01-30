@@ -48,7 +48,7 @@ export default function Dashboard() {
         return orders.filter(order => {
             const matchesSearch =
                 (order.customer?.name || '').toLowerCase().includes(search.toLowerCase()) ||
-                (order.order_number?.toString() || '').includes(search) ||
+                order.order_number.toString().includes(search) ||
                 (order.equipment_model || '').toLowerCase().includes(search.toLowerCase())
 
             const matchesStatus = statusFilter === 'all' || order.current_status === statusFilter
@@ -187,9 +187,9 @@ export default function Dashboard() {
                                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                         <div className="space-y-1">
                                             <div className="flex items-center gap-2">
-                                                <span className="font-bold text-lg">#{order.order_number || '---'}</span>
+                                                <span className="font-bold text-lg">#{order.order_number}</span>
                                                 <span className="text-muted-foreground">•</span>
-                                                <span className="font-medium">{order.customer?.name || 'Cliente'}</span>
+                                                <span className="font-medium">{order.customer?.name}</span>
                                             </div>
                                             <div className="text-sm text-muted-foreground">
                                                 {order.equipment_brand} {order.equipment_model}
@@ -203,7 +203,7 @@ export default function Dashboard() {
                                             <div className="text-right hidden md:block">
                                                 <div className="text-sm font-medium">Entrada</div>
                                                 <div className="text-sm text-muted-foreground">
-                                                    {order.entry_date ? new Date(order.entry_date).toLocaleDateString('pt-BR') : '---'}
+                                                    {new Date(order.entry_date).toLocaleDateString('pt-BR')}
                                                 </div>
                                             </div>
 

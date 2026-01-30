@@ -159,9 +159,9 @@ function SortableTask({ order, columns, onMove }) {
         >
             <div className="flex justify-between items-start mb-2">
                 <div className="flex items-center gap-2">
-                    <span className="font-bold text-sm text-primary">#{order.order_number || '---'}</span>
+                    <span className="font-bold text-sm text-primary">#{order.order_number}</span>
                     <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                        {order.entry_date ? new Date(order.entry_date).toLocaleDateString('pt-BR') : '---'}
+                        {new Date(order.entry_date).toLocaleDateString('pt-BR')}
                     </span>
                 </div>
 
@@ -404,8 +404,8 @@ export default function Kanban() {
                             </div>
                         ) : (
                             <div className="bg-background p-3 rounded-lg border shadow-xl w-[300px]">
-                                <p className="font-bold text-sm text-primary">#{activeDragItem.order_number || '---'}</p>
-                                <p className="font-medium text-sm">{activeDragItem.customer?.name || 'Cliente'}</p>
+                                <p className="font-bold text-sm text-primary">#{activeDragItem.order_number}</p>
+                                <p className="font-medium text-sm">{activeDragItem.customer?.name}</p>
                             </div>
                         )
                     )}
