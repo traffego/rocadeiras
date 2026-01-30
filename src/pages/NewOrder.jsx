@@ -48,6 +48,12 @@ export default function NewOrder() {
         queryFn: api.customers.list
     })
 
+    // Fetch Kanban Columns to get the first status
+    const { data: kanbanColumns = [] } = useQuery({
+        queryKey: ['kanban_columns'],
+        queryFn: api.kanban.list
+    })
+
     // Create Customer Mutation
     const createCustomerMutation = useMutation({
         mutationFn: api.customers.create
@@ -124,7 +130,9 @@ export default function NewOrder() {
                 has_accessories: formData.has_accessories,
                 accessories_description: formData.accessories_description,
                 budget_authorized: formData.budget_authorized,
-                current_status: 'received'
+                current_status: kanbanColumns.length > 0
+                    ? kanbanColumns.reduce((prev, curr) => prev.position < curr.position ? prev : curr).slug
+                    : 'received'
             }
 
             await createOrderMutation.mutateAsync(orderData)
