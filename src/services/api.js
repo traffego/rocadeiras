@@ -176,6 +176,17 @@ export const api = {
             if (error) throw error
         }
     },
+    // Parts Catalog
+    parts: {
+        list: async () => {
+            const { data, error } = await supabase
+                .from('parts')
+                .select('*')
+                .order('description')
+            if (error) throw error
+            return data
+        }
+    },
     // Budgets
     budgets: {
         getById: async (id) => {

@@ -14,6 +14,13 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
@@ -27,6 +34,12 @@ export default function BudgetSection({ orderId }) {
     const { data: budget, isLoading } = useQuery({
         queryKey: ['budget', orderId],
         queryFn: () => api.budgets.getByOrderId(orderId)
+    })
+
+    // Fetch Parts Catalog
+    const { data: parts = [] } = useQuery({
+        queryKey: ['parts'],
+        queryFn: api.parts.list
     })
 
     // Mutations
@@ -91,6 +104,17 @@ export default function BudgetSection({ orderId }) {
         })
     }
 
+    const handlePartSelect = (partId) => {
+        const part = parts.find(p => p.id === partId)
+        if (part) {
+            setNewItem({
+                description: part.description,
+                price: part.default_price,
+                code: part.code
+            })
+        }
+    }
+
     const updateLabor = (val) => {
         updateBudgetMutation.mutate({ labor_cost: Number(val) })
     }
@@ -143,13 +167,20 @@ export default function BudgetSection({ orderId }) {
 
                         {isAdding ? (
                             <form onSubmit={handleAddItem} className="grid grid-cols-1 sm:grid-cols-4 gap-2 border p-3 rounded-lg bg-card">
-                                <Input
-                                    placeholder="Descrição"
-                                    className="sm:col-span-2"
-                                    value={newItem.description}
-                                    onChange={e => setNewItem(prev => ({ ...prev, description: e.target.value }))}
-                                    autoFocus
-                                />
+                                <div className="sm:col-span-2">
+                                    <Select onValueChange={handlePartSelect}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Selecione uma peça..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {parts.map(part => (
+                                                <SelectItem key={part.id} value={part.id}>
+                                                    {part.description} ({part.code}) - R$ {Number(part.default_price).toFixed(2)}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                                 <Input
                                     placeholder="Valor (R$)"
                                     type="number"
