@@ -19,7 +19,7 @@ import Inventory from './pages/Inventory'
 function App() {
   return (
     <AuthProvider>
-      <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+      <ThemeProvider defaultTheme="navy" storageKey="vite-ui-theme">
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
