@@ -16,6 +16,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/services/api'
 import { uploadToR2 } from '@/lib/r2'
 import { Button } from '@/components/ui/button'
+import BudgetSection from '@/components/os/BudgetSection'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -184,6 +185,9 @@ export default function OrderDetail() {
                             </div>
                         </CardContent>
                     </Card>
+
+                    {/* Orçamento */}
+                    <BudgetSection orderId={id} />
 
                     {/* Observations Input */}
                     <Card>
