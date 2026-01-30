@@ -12,6 +12,8 @@ import {
 import { Button } from '@/components/ui/button'
 import { useState } from 'react'
 import { useAuth } from '@/lib/auth'
+import { useTheme } from '@/components/theme-provider'
+import { Sun, Moon } from 'lucide-react'
 
 const navigation = [
     { name: 'Dashboard', href: '/', icon: ClipboardList },
@@ -26,6 +28,7 @@ const navigation = [
 export default function Layout() {
     const [sidebarOpen, setSidebarOpen] = useState(false)
     const { signOut } = useAuth()
+    const { theme, setTheme } = useTheme()
 
     return (
         <div className="min-h-screen bg-background">
@@ -87,6 +90,14 @@ export default function Layout() {
                         >
                             <LogOut className="mr-2 h-4 w-4" />
                             Sair do Sistema
+                        </Button>
+                        <Button
+                            variant="outline"
+                            className="w-full justify-start text-muted-foreground"
+                            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                        >
+                            {theme === 'dark' ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
+                            {theme === 'dark' ? 'Modo Claro' : 'Modo Escuro'}
                         </Button>
                         <p className="text-xs text-muted-foreground text-center">
                             v1.0.0 • ZMAQ
