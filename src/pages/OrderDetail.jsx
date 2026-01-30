@@ -19,6 +19,13 @@ import { Button } from '@/components/ui/button'
 import BudgetSection from '@/components/os/BudgetSection'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 import { Separator } from '@/components/ui/separator'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
@@ -56,6 +63,11 @@ export default function OrderDetail() {
     const { data: order, isLoading } = useQuery({
         queryKey: ['order', id],
         queryFn: () => api.orders.getById(id)
+    })
+
+    const { data: technicians = [] } = useQuery({
+        queryKey: ['technicians'],
+        queryFn: api.technicians.list
     })
 
     // Update mutation
@@ -209,6 +221,32 @@ export default function OrderDetail() {
 
                 {/* Sidebar Info */}
                 <div className="space-y-6">
+                    {/* Técnico Responsável */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-base">Técnico Responsável</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <Select
+                                value={order.technician_id || "none"}
+                                onValueChange={(v) => updateOrderMutation.mutate({ technician_id: v === "none" ? null : v })}
+                                disabled={updateOrderMutation.isPending}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Atribuir técnico..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">Nenhum</SelectItem>
+                                    {technicians.map(tech => (
+                                        <SelectItem key={tech.id} value={tech.id}>
+                                            {tech.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </CardContent>
+                    </Card>
+
                     {/* Equipamento */}
                     <Card>
                         <CardHeader>

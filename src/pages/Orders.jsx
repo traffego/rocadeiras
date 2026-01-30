@@ -127,6 +127,7 @@ export default function Orders() {
                                     <TableHead className="w-[100px]">OS</TableHead>
                                     <TableHead>Cliente</TableHead>
                                     <TableHead>Equipamento</TableHead>
+                                    <TableHead>Técnico</TableHead>
                                     <TableHead>Status</TableHead>
                                     <TableHead>Data Entrada</TableHead>
                                     <TableHead className="text-right">Ações</TableHead>
@@ -152,6 +153,11 @@ export default function Orders() {
                                                 </div>
                                                 <div className="text-[10px] text-muted-foreground uppercase">
                                                     {equipmentTypeLabel[order.equipment_type] || order.equipment_type}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="text-sm">
+                                                    {order.technician?.name || <span className="text-muted-foreground italic">Não atribuído</span>}
                                                 </div>
                                             </TableCell>
                                             <TableCell>

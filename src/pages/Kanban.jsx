@@ -19,7 +19,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/services/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Plus, X, GripVertical, AlertCircle, Loader2 } from 'lucide-react'
+import { Plus, X, GripVertical, AlertCircle, Loader2, Wrench } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
@@ -154,6 +154,12 @@ function SortableTask({ order }) {
             <p className="text-xs text-muted-foreground line-clamp-1">
                 {equipmentTypeLabel[order.equipment_type] || order.equipment_type} - {order.equipment_model}
             </p>
+            {order.technician?.name && (
+                <div className="mt-2 pt-2 border-t flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                    <Wrench className="h-3 w-3" />
+                    <span className="truncate">{order.technician.name}</span>
+                </div>
+            )}
         </div>
     )
 }

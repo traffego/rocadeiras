@@ -49,6 +49,12 @@ export default function NewOrder() {
         queryFn: api.customers.list
     })
 
+    // Fetch technicians
+    const { data: technicians = [] } = useQuery({
+        queryKey: ['technicians'],
+        queryFn: api.technicians.list
+    })
+
     // Fetch Kanban Columns to get the first status
     const { data: kanbanColumns = [] } = useQuery({
         queryKey: ['kanban_columns'],
@@ -84,6 +90,7 @@ export default function NewOrder() {
         equipment_model: '',
         equipment_serial: '',
         reported_defect: '',
+        technician_id: '',
         // Checklist
         machine_turns_on: null,
         needs_adjustment: null,
@@ -131,6 +138,7 @@ export default function NewOrder() {
                 has_accessories: formData.has_accessories,
                 accessories_description: formData.accessories_description,
                 budget_authorized: formData.budget_authorized,
+                technician_id: formData.technician_id || null,
                 current_status: kanbanColumns.length > 0
                     ? kanbanColumns.reduce((prev, curr) => prev.position < curr.position ? prev : curr).slug
                     : 'received'
@@ -383,6 +391,26 @@ export default function NewOrder() {
                                 placeholder="Descreva o problema relatado pelo cliente..."
                                 rows={3}
                             />
+                        </div>
+
+                        <div className="space-y-2 pt-4 border-t">
+                            <Label htmlFor="tech">Técnico Responsável (opcional)</Label>
+                            <Select
+                                value={formData.technician_id || "none"}
+                                onValueChange={(v) => updateForm('technician_id', v === "none" ? "" : v)}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Selecione um técnico..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">Nenhum</SelectItem>
+                                    {technicians.map(tech => (
+                                        <SelectItem key={tech.id} value={tech.id}>
+                                            {tech.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                     </CardContent>
                 </Card>
