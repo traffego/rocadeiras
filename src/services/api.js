@@ -137,5 +137,43 @@ export const api = {
             if (error) throw error
             return data
         }
+    },
+
+    // Kanban Columns
+    kanban: {
+        list: async () => {
+            const { data, error } = await supabase
+                .from('kanban_columns')
+                .select('*')
+                .order('position')
+            if (error) throw error
+            return data
+        },
+        create: async (column) => {
+            const { data, error } = await supabase
+                .from('kanban_columns')
+                .insert(column)
+                .select()
+                .single()
+            if (error) throw error
+            return data
+        },
+        update: async (slug, updates) => {
+            const { data, error } = await supabase
+                .from('kanban_columns')
+                .update(updates)
+                .eq('slug', slug)
+                .select()
+                .single()
+            if (error) throw error
+            return data
+        },
+        delete: async (slug) => {
+            const { error } = await supabase
+                .from('kanban_columns')
+                .delete()
+                .eq('slug', slug)
+            if (error) throw error
+        }
     }
 }

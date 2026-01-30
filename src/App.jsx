@@ -5,6 +5,7 @@ import { ProtectedRoute } from '@/components/ProtectedRoute'
 import Layout from './components/Layout'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
+import Kanban from './pages/Kanban'
 import NewOrder from './pages/NewOrder'
 import Customers from './pages/Customers'
 import Technicians from './pages/Technicians'
@@ -22,6 +23,7 @@ function App() {
           </ProtectedRoute>
         }>
           <Route index element={<Dashboard />} />
+          <Route path="kanban" element={<Kanban />} />
           <Route path="os/new" element={<NewOrder />} />
           <Route path="customers" element={<Customers />} />
           <Route path="technicians" element={<Technicians />} />

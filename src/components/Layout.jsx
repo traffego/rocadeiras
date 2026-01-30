@@ -5,7 +5,8 @@ import {
     Users,
     Wrench,
     Menu,
-    LogOut
+    LogOut,
+    Layout
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useState } from 'react'
@@ -13,6 +14,7 @@ import { useAuth } from '@/lib/auth'
 
 const navigation = [
     { name: 'Dashboard', href: '/', icon: ClipboardList },
+    { name: 'Kanban', href: '/kanban', icon: Layout },
     { name: 'Nova OS', href: '/os/new', icon: PlusCircle },
     { name: 'Clientes', href: '/customers', icon: Users },
     { name: 'Técnicos', href: '/technicians', icon: Wrench },
