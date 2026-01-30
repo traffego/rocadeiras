@@ -168,16 +168,25 @@ export default function BudgetSection({ orderId }) {
                         {isAdding ? (
                             <form onSubmit={handleAddItem} className="grid grid-cols-1 sm:grid-cols-4 gap-2 border p-3 rounded-lg bg-card">
                                 <div className="sm:col-span-2">
-                                    <Select onValueChange={handlePartSelect}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Selecione uma peça..." />
+                                    <Select
+                                        value={parts.find(p => p.description === newItem.description)?.id || ""}
+                                        onValueChange={handlePartSelect}
+                                    >
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder={parts.length > 0 ? "Selecione uma peça..." : "Catálogo vazio..."} />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {parts.map(part => (
-                                                <SelectItem key={part.id} value={part.id}>
-                                                    {part.description} ({part.code}) - R$ {Number(part.default_price).toFixed(2)}
-                                                </SelectItem>
-                                            ))}
+                                            {parts.length > 0 ? (
+                                                parts.map(part => (
+                                                    <SelectItem key={part.id} value={part.id}>
+                                                        {part.description} ({part.code}) - R$ {Number(part.default_price).toFixed(2)}
+                                                    </SelectItem>
+                                                ))
+                                            ) : (
+                                                <div className="p-2 text-sm text-center text-muted-foreground">
+                                                    Nenhuma peça cadastrada. Acesse o Supabase para popular a tabela 'parts'.
+                                                </div>
+                                            )}
                                         </SelectContent>
                                     </Select>
                                 </div>
