@@ -7,10 +7,14 @@ import {
     User,
     Wrench,
     ClipboardCheck,
+    CheckCircle2,
+    Loader2,
+    Calendar,
     Camera,
-    Save,
-    Loader2
+    X,
+    Upload
 } from 'lucide-react'
+import { storage } from '@/services/storage'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/services/api'
 import { Button } from '@/components/ui/button'
@@ -40,6 +44,9 @@ export default function NewOrder() {
     const [currentStep, setCurrentStep] = useState(1)
     const [isNewClient, setIsNewClient] = useState(false)
     const [loading, setLoading] = useState(false)
+    const [uploadedFiles, setUploadedFiles] = useState([])
+    const [uploading, setUploading] = useState(false)
+    const fileInputRef = useRef(null)
 
     const queryClient = useQueryClient()
 
@@ -107,7 +114,46 @@ export default function NewOrder() {
         setFormData(prev => ({ ...prev, [field]: value }))
     }
 
+    const handleFileUpload = async (e) => {
+        const files = Array.from(e.target.files)
+        if (files.length === 0) return
+
+        setUploading(true)
+        try {
+            for (const file of files) {
+                const result = await storage.upload(file, 'temp')
+                setUploadedFiles(prev => [...prev, {
+                    url: result.url,
+                    storage_path: result.path,
+                    storage_provider: result.provider,
+                    type: file.type.startsWith('video') ? 'video' : 'photo',
+                    name: file.name
+                }])
+            }
+            toast.success("Arquivos carregados com sucesso!")
+        } catch (error) {
+            toast.error("Erro no upload: " + error.message)
+        } finally {
+            setUploading(false)
+            if (fileInputRef.current) fileInputRef.current.value = ''
+        }
+    }
+
+    const removeFile = async (index) => {
+        const file = uploadedFiles[index]
+        try {
+            if (file.storage_path) {
+                await storage.delete(file.storage_path, file.storage_provider)
+            }
+            setUploadedFiles(prev => prev.filter((_, i) => i !== index))
+        } catch (error) {
+            toast.error("Erro ao remover arquivo")
+        }
+    }
+
     const handleSubmit = async () => {
+        if (!canProceed()) return
+
         setLoading(true)
         try {
             let customerId = formData.customer_id
@@ -144,7 +190,24 @@ export default function NewOrder() {
                     : 'received'
             }
 
-            await createOrderMutation.mutateAsync(orderData)
+            const order = await createOrderMutation.mutateAsync(orderData)
+
+            // 4. Save uploaded files
+            if (uploadedFiles.length > 0) {
+                await Promise.all(uploadedFiles.map(file =>
+                    api.files.create({
+                        service_order_id: order.id,
+                        url: file.url,
+                        step: 'received',
+                        type: file.type,
+                        caption: 'Foto de Entrada',
+                        storage_path: file.storage_path,
+                        storage_provider: file.storage_provider
+                    })
+                ))
+            }
+
+            toast.success("Ordem de Serviço criada com sucesso!")
 
         } catch (error) {
             console.error(error)
@@ -578,11 +641,60 @@ export default function NewOrder() {
                         </div>
 
                         {/* Entry Files */}
-                        <div className="space-y-3 pt-4 border-t">
-                            <Label>Fotos de Entrada</Label>
-                            <p className="text-sm text-muted-foreground">
-                                Tire fotos do equipamento na chegada para registro. (Será habilitado na tela de detalhes)
-                            </p>
+                        <div className="space-y-4 pt-4 border-t">
+                            <div className="flex items-center justify-between">
+                                <Label className="text-indigo-700 font-bold flex items-center gap-2">
+                                    <Camera className="h-4 w-4" />
+                                    Fotos de Entrada
+                                </Label>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="border-indigo-200 text-indigo-700"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    disabled={uploading}
+                                >
+                                    {uploading ? (
+                                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                    ) : (
+                                        <Upload className="h-4 w-4 mr-2" />
+                                    )}
+                                    Anexar Mídia
+                                </Button>
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    className="hidden"
+                                    multiple
+                                    accept="image/*,video/*"
+                                    onChange={handleFileUpload}
+                                />
+                            </div>
+
+                            {uploadedFiles.length > 0 ? (
+                                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                                    {uploadedFiles.map((file, index) => (
+                                        <div key={index} className="relative aspect-square rounded-md overflow-hidden border group">
+                                            <img src={file.url} alt={file.name} className="object-cover w-full h-full" />
+                                            <button
+                                                type="button"
+                                                onClick={() => removeFile(index)}
+                                                className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            >
+                                                <X className="h-3 w-3" />
+                                            </button>
+                                            <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] p-1 truncate">
+                                                {file.name}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-sm text-muted-foreground italic">
+                                    Nenhuma mídia anexada ainda. Utilize fotos para o registro inicial.
+                                </p>
+                            )}
                         </div>
                     </CardContent>
                 </Card>
