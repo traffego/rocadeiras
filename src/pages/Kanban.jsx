@@ -155,9 +155,9 @@ function SortableTask({ order }) {
                 {equipmentTypeLabel[order.equipment_type] || order.equipment_type} - {order.equipment_model}
             </p>
             {order.technician?.name && (
-                <div className="mt-2 pt-2 border-t flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                <div className="mt-2 pt-2 border-t flex items-center gap-1.5 text-[10px] font-semibold text-indigo-600">
                     <Wrench className="h-3 w-3" />
-                    <span className="truncate">{order.technician.name}</span>
+                    <span className="truncate uppercase tracking-wider">{order.technician.name}</span>
                 </div>
             )}
         </div>

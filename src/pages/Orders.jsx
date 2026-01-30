@@ -157,7 +157,14 @@ export default function Orders() {
                                             </TableCell>
                                             <TableCell>
                                                 <div className="text-sm">
-                                                    {order.technician?.name || <span className="text-muted-foreground italic">Não atribuído</span>}
+                                                    {order.technician?.name ? (
+                                                        <Badge variant="secondary" className="bg-indigo-50 text-indigo-700 border-indigo-100 hover:bg-indigo-100 font-bold">
+                                                            <Wrench className="mr-1 h-3 w-3" />
+                                                            {order.technician.name}
+                                                        </Badge>
+                                                    ) : (
+                                                        <span className="text-muted-foreground italic text-xs">Não atribuído</span>
+                                                    )}
                                                 </div>
                                             </TableCell>
                                             <TableCell>

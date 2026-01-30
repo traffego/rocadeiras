@@ -393,13 +393,16 @@ export default function NewOrder() {
                             />
                         </div>
 
-                        <div className="space-y-2 pt-4 border-t">
-                            <Label htmlFor="tech">Técnico Responsável (opcional)</Label>
+                        <div className="space-y-2 pt-4 border-t bg-indigo-50/30 -mx-6 px-6 pb-4">
+                            <Label htmlFor="tech" className="text-indigo-700 font-bold flex items-center gap-2">
+                                <Wrench className="h-4 w-4" />
+                                Técnico Responsável (opcional)
+                            </Label>
                             <Select
                                 value={formData.technician_id || "none"}
                                 onValueChange={(v) => updateForm('technician_id', v === "none" ? "" : v)}
                             >
-                                <SelectTrigger>
+                                <SelectTrigger className="bg-background border-indigo-200">
                                     <SelectValue placeholder="Selecione um técnico..." />
                                 </SelectTrigger>
                                 <SelectContent>

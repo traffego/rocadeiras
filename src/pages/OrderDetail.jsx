@@ -222,9 +222,12 @@ export default function OrderDetail() {
                 {/* Sidebar Info */}
                 <div className="space-y-6">
                     {/* Técnico Responsável */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-base">Técnico Responsável</CardTitle>
+                    <Card className="border-indigo-100 bg-indigo-50/30">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-base flex items-center gap-2 text-indigo-700">
+                                <Wrench className="h-4 w-4" />
+                                Técnico Responsável
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <Select
@@ -232,7 +235,7 @@ export default function OrderDetail() {
                                 onValueChange={(v) => updateOrderMutation.mutate({ technician_id: v === "none" ? null : v })}
                                 disabled={updateOrderMutation.isPending}
                             >
-                                <SelectTrigger>
+                                <SelectTrigger className="bg-background border-indigo-200">
                                     <SelectValue placeholder="Atribuir técnico..." />
                                 </SelectTrigger>
                                 <SelectContent>
