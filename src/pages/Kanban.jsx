@@ -37,7 +37,7 @@ import { MoreVertical } from 'lucide-react'
 
 // --- Internal Components ---
 
-function SortableColumn({ column, orders, columns, onMove, onDelete, onUpdateTitle }) {
+function SortableColumn({ column, orders, columns, onMove, onDelete, onUpdateTitle, zoom }) {
     const {
         setNodeRef,
         attributes,
@@ -84,7 +84,9 @@ function SortableColumn({ column, orders, columns, onMove, onDelete, onUpdateTit
                     <span className="bg-primary/10 text-primary px-2 py-1 rounded text-xs font-bold">
                         {orders.length}
                     </span>
-                    {column.title}
+                    <span style={{ fontSize: `calc(1rem / ${zoom})`, lineHeight: 1.2 }}>
+                        {column.title}
+                    </span>
                 </div>
 
                 {/* Only allow deleting if custom (not default) - for safety, or allow all with confirm? Let's just allow all for now but warn */}
@@ -101,7 +103,9 @@ function SortableColumn({ column, orders, columns, onMove, onDelete, onUpdateTit
                             key={order.id}
                             order={order}
                             columns={columns}
+                            columns={columns}
                             onMove={onMove}
+                            zoom={zoom}
                         />
                     ))}
                 </SortableContext>
@@ -110,7 +114,7 @@ function SortableColumn({ column, orders, columns, onMove, onDelete, onUpdateTit
     )
 }
 
-function SortableTask({ order, columns, onMove }) {
+function SortableTask({ order, columns, onMove, zoom }) {
     const navigate = useNavigate()
     const {
         setNodeRef,
@@ -159,7 +163,12 @@ function SortableTask({ order, columns, onMove }) {
         >
             <div className="flex justify-between items-start mb-2">
                 <div className="flex items-center gap-2">
-                    <span className="font-bold text-sm text-primary">#{order.order_number}</span>
+                    <span
+                        className="font-bold text-sm text-primary"
+                        style={{ fontSize: `calc(0.875rem / ${zoom})`, lineHeight: 1.2 }}
+                    >
+                        #{order.order_number}
+                    </span>
                     <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
                         {new Date(order.entry_date).toLocaleDateString('pt-BR')}
                     </span>
@@ -195,7 +204,12 @@ function SortableTask({ order, columns, onMove }) {
                 </DropdownMenu>
             </div>
 
-            <p className="font-medium text-sm line-clamp-1">{order.customer?.name}</p>
+            <p
+                className="font-medium text-sm line-clamp-1"
+                style={{ fontSize: `calc(0.875rem / ${zoom})`, lineHeight: 1.2 }}
+            >
+                {order.customer?.name}
+            </p>
             <p className="text-xs text-muted-foreground line-clamp-1">
                 {equipmentTypeLabel[order.equipment_type] || order.equipment_type} - {order.equipment_model}
             </p>
@@ -417,7 +431,9 @@ export default function Kanban() {
                                 column={col}
                                 orders={orders.filter(o => o.current_status === col.slug)}
                                 columns={columns}
+                                columns={columns}
                                 onMove={(orderId, newStatus) => updateOrderStatusMutation.mutate({ orderId, newStatus })}
+                                zoom={zoom}
                             />
                         ))}
                     </SortableContext>
