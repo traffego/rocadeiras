@@ -96,54 +96,53 @@ export default function Layout() {
                             <LogOut className="mr-2 h-4 w-4" />
                             Sair do Sistema
                         </Button>
-                        Sair do Sistema
-                    </Button>
 
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" className="w-full justify-start text-muted-foreground">
-                                <Palette className="mr-2 h-4 w-4" />
-                                Tema: {theme === 'dark' ? 'Escuro' : theme === 'navy' ? 'Marinho' : 'Claro'}
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-56">
-                            <DropdownMenuItem onClick={() => setTheme("light")}>
-                                <Sun className="mr-2 h-4 w-4" />
-                                Claro
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setTheme("dark")}>
-                                <Moon className="mr-2 h-4 w-4" />
-                                Escuro
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setTheme("navy")}>
-                                <Palette className="mr-2 h-4 w-4 text-blue-500" />
-                                Marinho
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                    <p className="text-xs text-muted-foreground text-center">
-                        v1.0.0 • ZMAQ
-                    </p>
+
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" className="w-full justify-start text-muted-foreground">
+                                    <Palette className="mr-2 h-4 w-4" />
+                                    Tema: {theme === 'dark' ? 'Escuro' : theme === 'navy' ? 'Marinho' : 'Claro'}
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56">
+                                <DropdownMenuItem onClick={() => setTheme("light")}>
+                                    <Sun className="mr-2 h-4 w-4" />
+                                    Claro
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setTheme("dark")}>
+                                    <Moon className="mr-2 h-4 w-4" />
+                                    Escuro
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setTheme("navy")}>
+                                    <Palette className="mr-2 h-4 w-4 text-blue-500" />
+                                    Marinho
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        <p className="text-xs text-muted-foreground text-center">
+                            v1.0.0 • ZMAQ
+                        </p>
+                    </div>
                 </div>
-        </div>
             </aside >
 
-        {/* Overlay */ }
-    {
-        sidebarOpen && (
-            <div
-                className="fixed inset-0 z-30 bg-black/50 lg:hidden"
-                onClick={() => setSidebarOpen(false)}
-            />
-        )
-    }
+            {/* Overlay */}
+            {
+                sidebarOpen && (
+                    <div
+                        className="fixed inset-0 z-30 bg-black/50 lg:hidden"
+                        onClick={() => setSidebarOpen(false)}
+                    />
+                )
+            }
 
-    {/* Main content */ }
-    <main className="lg:pl-64 pt-16 lg:pt-0">
-        <div className="p-6">
-            <Outlet />
-        </div>
-    </main>
+            {/* Main content */}
+            <main className="lg:pl-64 pt-16 lg:pt-0">
+                <div className="p-6">
+                    <Outlet />
+                </div>
+            </main>
         </div >
     )
 }
