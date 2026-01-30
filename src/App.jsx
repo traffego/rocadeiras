@@ -11,6 +11,7 @@ import Customers from './pages/Customers'
 import Technicians from './pages/Technicians'
 import OrderDetail from './pages/OrderDetail'
 import Orders from './pages/Orders'
+import Inventory from './pages/Inventory'
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
           <Route path="os" element={<Orders />} />
           <Route path="kanban" element={<Kanban />} />
           <Route path="os/new" element={<NewOrder />} />
+          <Route path="inventory" element={<Inventory />} />
           <Route path="customers" element={<Customers />} />
           <Route path="technicians" element={<Technicians />} />
           <Route path="os/:id" element={<OrderDetail />} />

@@ -185,6 +185,32 @@ export const api = {
                 .order('description')
             if (error) throw error
             return data
+        },
+        create: async (part) => {
+            const { data, error } = await supabase
+                .from('parts')
+                .insert(part)
+                .select()
+                .single()
+            if (error) throw error
+            return data
+        },
+        update: async (id, updates) => {
+            const { data, error } = await supabase
+                .from('parts')
+                .update(updates)
+                .eq('id', id)
+                .select()
+                .single()
+            if (error) throw error
+            return data
+        },
+        delete: async (id) => {
+            const { error } = await supabase
+                .from('parts')
+                .delete()
+                .eq('id', id)
+            if (error) throw error
         }
     },
     // Budgets

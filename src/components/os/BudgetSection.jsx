@@ -100,7 +100,8 @@ export default function BudgetSection({ orderId }) {
         addItemMutation.mutate({
             description: newItem.description,
             price: Number(newItem.price),
-            code: newItem.code
+            code: newItem.code,
+            brand: newItem.brand
         })
     }
 
@@ -110,7 +111,8 @@ export default function BudgetSection({ orderId }) {
             setNewItem({
                 description: part.description,
                 price: part.default_price,
-                code: part.code
+                code: part.code,
+                brand: part.brand
             })
         }
     }
@@ -146,6 +148,7 @@ export default function BudgetSection({ orderId }) {
                                 <div className="flex-1">
                                     <div className="flex items-center gap-2">
                                         <span className="font-medium">{item.description}</span>
+                                        {item.brand && <Badge variant="outline" className="text-[10px]">{item.brand}</Badge>}
                                         {item.code && <Badge variant="outline" className="text-[10px]">{item.code}</Badge>}
                                     </div>
                                 </div>

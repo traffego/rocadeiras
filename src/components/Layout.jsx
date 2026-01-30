@@ -6,7 +6,8 @@ import {
     Wrench,
     Menu,
     LogOut,
-    Layout as LayoutIcon
+    Layout as LayoutIcon,
+    Package
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useState } from 'react'
@@ -17,6 +18,7 @@ const navigation = [
     { name: 'Listagem de OS', href: '/os', icon: ClipboardList },
     { name: 'Kanban', href: '/kanban', icon: LayoutIcon },
     { name: 'Nova OS', href: '/os/new', icon: PlusCircle },
+    { name: 'Peças', href: '/inventory', icon: Package },
     { name: 'Clientes', href: '/customers', icon: Users },
     { name: 'Técnicos', href: '/technicians', icon: Wrench },
 ]
