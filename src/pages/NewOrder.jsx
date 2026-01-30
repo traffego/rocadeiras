@@ -209,6 +209,12 @@ export default function NewOrder() {
 
             toast.success("Ordem de Serviço criada com sucesso!")
 
+            // 5. Navigate to Detail
+            navigate(`/os/${order.id}`)
+
+            // 6. Reset Form
+            setUploadedFiles([])
+
         } catch (error) {
             console.error(error)
             toast.error("Erro ao processar: " + error.message)

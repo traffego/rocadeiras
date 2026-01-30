@@ -95,7 +95,7 @@ export default function OrderDetail() {
         return <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>
     }
 
-    const currentStepIndex = statusFlow.indexOf(order.current_status)
+    const currentStepIndex = statusFlow.indexOf(order.current_status || 'received')
     const nextStep = statusFlow[currentStepIndex + 1]
 
     const handleAdvanceStep = () => {
@@ -170,9 +170,9 @@ export default function OrderDetail() {
                     </Button>
                     <div>
                         <div className="flex items-center gap-2">
-                            <h1 className="text-2xl font-bold">OS #{order.order_number.toString().padStart(4, '0')}</h1>
-                            <Badge className={statusConfig[order.current_status].color}>
-                                {statusConfig[order.current_status].label}
+                            <h1 className="text-2xl font-bold">OS #{order.order_number?.toString().padStart(4, '0') || '0000'}</h1>
+                            <Badge className={statusConfig[order.current_status]?.color || 'bg-gray-500'}>
+                                {statusConfig[order.current_status]?.label || order.current_status}
                             </Badge>
                         </div>
                         <p className="text-muted-foreground">
@@ -218,11 +218,11 @@ export default function OrderDetail() {
                                                         ? 'bg-primary border-primary text-primary-foreground'
                                                         : 'bg-background border-muted text-muted-foreground'}
                         `}>
-                                                    <config.icon className="h-5 w-5" />
+                                                    {config?.icon ? <config.icon className="h-5 w-5" /> : <Clock className="h-5 w-5" />}
                                                 </div>
                                                 <div className="flex-1">
                                                     <p className={`font-medium ${isCurrent ? 'text-primary' : ''}`}>
-                                                        {config.label}
+                                                        {config?.label || step}
                                                     </p>
                                                 </div>
                                             </div>
