@@ -255,7 +255,16 @@ export default function OrderDetail() {
                     </Card>
 
                     {/* Orçamento */}
-                    <BudgetSection orderId={id} onApprove={handleAdvanceStep} />
+                    <BudgetSection
+                        orderId={id}
+                        onApprove={() => {
+                            const currentIdx = statusFlow.indexOf(order.current_status || 'received')
+                            const washingIdx = statusFlow.indexOf('washing')
+                            if (currentIdx < washingIdx) {
+                                updateOrderMutation.mutate({ current_status: 'washing' })
+                            }
+                        }}
+                    />
 
                     {/* Observations Input */}
                     <Card>
