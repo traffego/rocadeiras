@@ -257,6 +257,7 @@ export default function OrderDetail() {
                     {/* Orçamento */}
                     <BudgetSection
                         orderId={id}
+                        orderStatus={order.current_status}
                         onApprove={() => {
                             const currentIdx = statusFlow.indexOf(order.current_status || 'received')
                             const washingIdx = statusFlow.indexOf('washing')

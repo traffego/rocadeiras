@@ -25,7 +25,7 @@ import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 
-export default function BudgetSection({ orderId, onApprove }) {
+export default function BudgetSection({ orderId, orderStatus, onApprove }) {
     const queryClient = useQueryClient()
     const [newItem, setNewItem] = useState({ description: '', price: '', code: '' })
     const [isAdding, setIsAdding] = useState(false)
@@ -267,24 +267,30 @@ export default function BudgetSection({ orderId, onApprove }) {
 
                 {/* Status Controls */}
                 {budget.status === 'pending' && (
-                    <div className="flex gap-4 pt-2">
-                        <Button
-                            variant="default"
-                            className="flex-1 bg-green-600 hover:bg-green-700"
-                            onClick={() => updateStatus('approved')}
-                        >
-                            <CheckCircle2 className="mr-2 h-4 w-4" />
-                            Aprovar Orçamento
-                        </Button>
-                        <Button
-                            variant="destructive"
-                            className="flex-1"
-                            onClick={() => updateStatus('rejected')}
-                        >
-                            <XCircle className="mr-2 h-4 w-4" />
-                            Reprovar
-                        </Button>
-                    </div>
+                    orderStatus === 'budget' ? (
+                        <div className="flex gap-4 pt-2">
+                            <Button
+                                variant="default"
+                                className="flex-1 bg-green-600 hover:bg-green-700"
+                                onClick={() => updateStatus('approved')}
+                            >
+                                <CheckCircle2 className="mr-2 h-4 w-4" />
+                                Aprovar Orçamento
+                            </Button>
+                            <Button
+                                variant="destructive"
+                                className="flex-1"
+                                onClick={() => updateStatus('rejected')}
+                            >
+                                <XCircle className="mr-2 h-4 w-4" />
+                                Reprovar
+                            </Button>
+                        </div>
+                    ) : (
+                        <p className="text-xs text-center text-muted-foreground pt-2">
+                            Avance o fluxo de trabalho até a fase <strong>Orçamento</strong> para aprovar ou reprovar.
+                        </p>
+                    )
                 )}
             </CardContent>
         </Card>
