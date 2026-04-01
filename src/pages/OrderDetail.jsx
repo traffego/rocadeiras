@@ -233,14 +233,16 @@ export default function OrderDetail() {
                                             <div key={step} className="relative flex items-center gap-4">
                                                 <div className={`
                           relative z-10 flex h-10 w-10 items-center justify-center rounded-full border-2 
-                          ${isCompleted
-                                                        ? 'bg-primary border-primary text-primary-foreground'
-                                                        : 'bg-background border-muted text-muted-foreground'}
+                          ${isCurrent
+                                                        ? 'bg-green-500 border-green-500 text-white'
+                                                        : isCompleted
+                                                            ? 'bg-green-700 border-green-700 text-white'
+                                                            : 'bg-background border-muted text-muted-foreground'}
                         `}>
                                                     {config?.icon ? <config.icon className="h-5 w-5" /> : <Clock className="h-5 w-5" />}
                                                 </div>
                                                 <div className="flex-1">
-                                                    <p className={`font-medium ${isCurrent ? 'text-primary' : ''}`}>
+                                                    <p className={`font-medium ${isCurrent ? 'text-green-500' : isCompleted ? 'text-green-700' : ''}`}>
                                                         {config?.label || step}
                                                     </p>
                                                 </div>
