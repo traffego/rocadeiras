@@ -25,7 +25,7 @@ import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 
-export default function BudgetSection({ orderId }) {
+export default function BudgetSection({ orderId, onApprove }) {
     const queryClient = useQueryClient()
     const [newItem, setNewItem] = useState({ description: '', price: '', code: '' })
     const [isAdding, setIsAdding] = useState(false)
@@ -132,7 +132,13 @@ export default function BudgetSection({ orderId }) {
     }
 
     const updateStatus = (status) => {
-        updateBudgetMutation.mutate({ status })
+        updateBudgetMutation.mutate({ status }, {
+            onSuccess: () => {
+                if (status === 'approved' && onApprove) {
+                    onApprove()
+                }
+            }
+        })
         toast.success(`Orçamento ${status === 'approved' ? 'Aprovado' : 'Reprovado'}!`)
     }
 

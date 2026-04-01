@@ -253,7 +253,7 @@ export default function OrderDetail() {
                     </Card>
 
                     {/* Orçamento */}
-                    <BudgetSection orderId={id} />
+                    <BudgetSection orderId={id} onApprove={handleAdvanceStep} />
 
                     {/* Observations Input */}
                     <Card>

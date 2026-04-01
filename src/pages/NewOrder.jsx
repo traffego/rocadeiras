@@ -522,7 +522,7 @@ export default function NewOrder() {
                             </div>
                             {formData.machine_turns_on === true && (
                                 <div className="ml-4 pt-2 space-y-2">
-                                    <Label>Exige regulagem?</Label>
+                                    <Label>Regula?</Label>
                                     <div className="flex gap-2">
                                         <Button
                                             type="button"
