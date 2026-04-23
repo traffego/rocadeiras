@@ -25,9 +25,9 @@ import { useAuth } from '@/lib/auth'
 
 const navigation = [
     { name: 'Dashboard', href: '/', icon: ClipboardList },
-    { name: 'Listagem de OS', href: '/os', icon: ClipboardList },
+    { name: 'Serviços', href: '/os', icon: ClipboardList },
     { name: 'Kanban', href: '/kanban', icon: LayoutIcon },
-    { name: 'Nova OS', href: '/os/new', icon: PlusCircle },
+    { name: 'Novo Serviço', href: '/os/new', icon: PlusCircle },
     { name: 'Peças', href: '/inventory', icon: Package },
     { name: 'Clientes', href: '/customers', icon: Users },
     { name: 'Técnicos', href: '/technicians', icon: Wrench },

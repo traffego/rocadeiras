@@ -81,7 +81,7 @@ export default function Dashboard() {
                 <Link to="/os/new">
                     <Button>
                         <PlusCircle className="mr-2 h-4 w-4" />
-                        Nova OS
+                        Novo Serviço
                     </Button>
                 </Link>
             </div>
