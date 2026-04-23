@@ -31,7 +31,6 @@ import {
 } from "@/components/ui/select"
 import { toast } from 'sonner'
 import { uploadToR2 } from '@/lib/r2'
-import { EQUIPMENT_BRANDS } from '@/data/equipmentData'
 
 const steps = [
     { id: 1, name: 'Cliente', icon: User },
@@ -71,6 +70,18 @@ export default function NewOrder() {
     const { data: kanbanColumns = [] } = useQuery({
         queryKey: ['kanban_columns'],
         queryFn: api.kanban.list
+    })    // Fetch equipment data from DB
+    const { data: equipmentTypes = [] } = useQuery({
+        queryKey: ['equipmentTypes'],
+        queryFn: api.equipmentTypes.list
+    })
+    const { data: brands = [] } = useQuery({
+        queryKey: ['brands'],
+        queryFn: api.brands.list
+    })
+    const { data: allModels = [] } = useQuery({
+        queryKey: ['models'],
+        queryFn: api.models.list
     })
 
     // Create Customer Mutation
@@ -97,9 +108,9 @@ export default function NewOrder() {
         customer_cpf: '',
         customer_address: '',
         // Equipment
-        equipment_type: '',
-        equipment_brand: '',
-        equipment_model: '',
+        equipment_type_id: '',
+        equipment_brand_id: '',
+        equipment_model_id: '',
         equipment_serial: '',
         reported_defect: '',
         technician_id: '',
@@ -195,9 +206,8 @@ export default function NewOrder() {
             // Create Order
             const orderData = {
                 customer_id: customerId,
-                equipment_type: formData.equipment_type,
-                equipment_brand: formData.equipment_brand,
-                equipment_model: formData.equipment_model,
+                equipment_type_id: formData.equipment_type_id,
+                equipment_model_id: formData.equipment_model_id,
                 equipment_serial: formData.equipment_serial,
                 reported_defect: formData.reported_defect,
                 machine_turns_on: formData.machine_turns_on,
@@ -254,8 +264,8 @@ export default function NewOrder() {
                 }
                 return formData.customer_id
             case 2:
-                return formData.equipment_type && formData.equipment_brand &&
-                    formData.equipment_model && formData.reported_defect
+                return formData.equipment_type_id && formData.equipment_brand_id &&
+                    formData.equipment_model_id && formData.reported_defect
             case 3:
                 return formData.machine_turns_on !== null && formData.was_stopped !== null &&
                     formData.has_accessories !== null && formData.budget_authorized !== null
@@ -440,57 +450,53 @@ export default function NewOrder() {
                     <CardContent className="space-y-4">
                         <div className="space-y-2">
                             <Label>Tipo de Equipamento *</Label>
-                            <Select value={formData.equipment_type} onValueChange={(v) => updateForm('equipment_type', v)}>
+                            <Select value={formData.equipment_type_id} onValueChange={(v) => updateForm('equipment_type_id', v)}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Selecione o tipo..." />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="brush_cutter">Roçadeira</SelectItem>
-                                    <SelectItem value="chainsaw">Motosserra</SelectItem>
-                                    <SelectItem value="sprayer">Pulverizador</SelectItem>
+                                    {equipmentTypes.map(t => (
+                                        <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                                    ))}
                                 </SelectContent>
                             </Select>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label htmlFor="brand">Marca *</Label>
+                                <Label>Marca *</Label>
                                 <Select
-                                    value={formData.equipment_brand}
+                                    value={formData.equipment_brand_id}
                                     onValueChange={(v) => {
-                                        updateForm('equipment_brand', v)
-                                        updateForm('equipment_model', '') // Reset model when brand changes
+                                        updateForm('equipment_brand_id', v)
+                                        updateForm('equipment_model_id', '')
                                     }}
                                 >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Selecione a marca..." />
                                     </SelectTrigger>
                                     <SelectContent className="h-64">
-                                        {EQUIPMENT_BRANDS.map(brand => (
-                                            <SelectItem key={brand.name} value={brand.name}>
-                                                {brand.name}
-                                            </SelectItem>
+                                        {brands.map(b => (
+                                            <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="model">Modelo *</Label>
+                                <Label>Modelo *</Label>
                                 <Select
-                                    value={formData.equipment_model}
-                                    onValueChange={(v) => updateForm('equipment_model', v)}
-                                    disabled={!formData.equipment_brand}
+                                    value={formData.equipment_model_id}
+                                    onValueChange={(v) => updateForm('equipment_model_id', v)}
+                                    disabled={!formData.equipment_brand_id}
                                 >
                                     <SelectTrigger>
-                                        <SelectValue placeholder={!formData.equipment_brand ? "Selecione a marca primeiro" : "Selecione o modelo..."} />
+                                        <SelectValue placeholder={!formData.equipment_brand_id ? 'Selecione a marca primeiro' : 'Selecione o modelo...'} />
                                     </SelectTrigger>
                                     <SelectContent className="h-64">
-                                        {formData.equipment_brand && EQUIPMENT_BRANDS
-                                            .find(b => b.name === formData.equipment_brand)
-                                            ?.models.map(model => (
-                                                <SelectItem key={model} value={model}>
-                                                    {model}
-                                                </SelectItem>
+                                        {allModels
+                                            .filter(m => m.brand_id === formData.equipment_brand_id)
+                                            .map(m => (
+                                                <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
                                             ))
                                         }
                                     </SelectContent>

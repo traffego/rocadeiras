@@ -46,11 +46,6 @@ const statusConfig = {
     finished: { label: 'Finalizada', color: 'bg-gray-400', icon: CheckCircle2 },
 }
 
-const equipmentTypeConfig = {
-    brush_cutter: 'Roçadeira',
-    chainsaw: 'Motosserra',
-    sprayer: 'Pulverizador'
-}
 
 export default function OrderDetail() {
     const { id } = useParams()
@@ -195,7 +190,7 @@ export default function OrderDetail() {
                             </Badge>
                         </div>
                         <p className="text-muted-foreground">
-                            {order.customer?.name} • {equipmentTypeConfig[order.equipment_type] || order.equipment_type} {order.equipment_model}
+                            {order.customer?.name} • {order.equipment_type_data?.name} {order.equipment_model_data?.name}
                         </p>
                     </div>
                 </div>
@@ -323,10 +318,13 @@ export default function OrderDetail() {
                         </CardHeader>
                         <CardContent className="text-sm space-y-2">
                             <div>
-                                <span className="font-medium">Marca:</span> {order.equipment_brand}
+                                <span className="font-medium">Tipo:</span> {order.equipment_type_data?.name || '—'}
                             </div>
                             <div>
-                                <span className="font-medium">Modelo:</span> {order.equipment_model}
+                                <span className="font-medium">Marca:</span> {order.equipment_model_data?.brand?.name || '—'}
+                            </div>
+                            <div>
+                                <span className="font-medium">Modelo:</span> {order.equipment_model_data?.name || '—'}
                             </div>
                             <div>
                                 <span className="font-medium">Série:</span> {order.equipment_serial || 'N/A'}
