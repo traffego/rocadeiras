@@ -10,7 +10,8 @@ import {
     Package,
     Sun,
     Moon,
-    Palette
+    Palette,
+    Cpu
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useState } from 'react'
@@ -29,6 +30,7 @@ const navigation = [
     { name: 'Kanban', href: '/kanban', icon: LayoutIcon },
     { name: 'Novo Serviço', href: '/os/new', icon: PlusCircle },
     { name: 'Peças', href: '/inventory', icon: Package },
+    { name: 'Equipamentos', href: '/equipments', icon: Cpu },
     { name: 'Clientes', href: '/customers', icon: Users },
     { name: 'Técnicos', href: '/technicians', icon: Wrench },
 ]

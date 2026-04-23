@@ -284,5 +284,44 @@ export const api = {
                 .eq('id', id)
             if (error) throw error
         }
+    },
+
+    // Equipment Models
+    equipments: {
+        list: async () => {
+            const { data, error } = await supabase
+                .from('equipment_models')
+                .select('*')
+                .order('brand')
+                .order('model')
+            if (error) throw error
+            return data
+        },
+        create: async (equipment) => {
+            const { data, error } = await supabase
+                .from('equipment_models')
+                .insert(equipment)
+                .select()
+                .single()
+            if (error) throw error
+            return data
+        },
+        update: async (id, updates) => {
+            const { data, error } = await supabase
+                .from('equipment_models')
+                .update(updates)
+                .eq('id', id)
+                .select()
+                .single()
+            if (error) throw error
+            return data
+        },
+        delete: async (id) => {
+            const { error } = await supabase
+                .from('equipment_models')
+                .delete()
+                .eq('id', id)
+            if (error) throw error
+        }
     }
 }
