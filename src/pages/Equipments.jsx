@@ -134,14 +134,6 @@ export default function Equipments() {
     const isSaving = createMutation.isPending || updateMutation.isPending
     const isFormValid = formData.type && formData.brand.trim() && formData.model.trim()
 
-    // Group filtered results by brand for display
-    const grouped = filtered.reduce((acc, eq) => {
-        const key = eq.brand
-        if (!acc[key]) acc[key] = []
-        acc[key].push(eq)
-        return acc
-    }, {})
-
     if (isLoading) {
         return <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>
     }
@@ -246,7 +238,7 @@ export default function Equipments() {
                 </div>
             </div>
 
-            {/* Content */}
+            {/* Cards Grid */}
             {filtered.length === 0 ? (
                 <Card>
                     <CardContent className="py-12 text-center text-muted-foreground">
@@ -255,54 +247,45 @@ export default function Equipments() {
                     </CardContent>
                 </Card>
             ) : (
-                <div className="space-y-6">
-                    {Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b)).map(([brand, items]) => (
-                        <div key={brand}>
-                            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">
-                                {brand}
-                            </h2>
-                            <Card>
-                                <CardContent className="p-0">
-                                    <table className="w-full text-sm">
-                                        <tbody>
-                                            {items.map((eq, idx) => (
-                                                <tr
-                                                    key={eq.id}
-                                                    className={`flex items-center justify-between px-4 py-3 ${idx !== items.length - 1 ? 'border-b border-border' : ''}`}
-                                                >
-                                                    <div className="flex items-center gap-3">
-                                                        <Badge className={`${TYPE_COLORS[eq.type]} text-white text-xs`}>
-                                                            {TYPE_LABELS[eq.type]}
-                                                        </Badge>
-                                                        <span className="font-medium">{eq.model}</span>
-                                                    </div>
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                                <MoreHorizontal className="h-4 w-4" />
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end">
-                                                            <DropdownMenuItem onClick={() => openEditDialog(eq)}>
-                                                                <Pencil className="mr-2 h-4 w-4" />
-                                                                Editar
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem
-                                                                className="text-destructive"
-                                                                onClick={() => handleDelete(eq.id)}
-                                                            >
-                                                                <Trash2 className="mr-2 h-4 w-4" />
-                                                                Excluir
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </CardContent>
-                            </Card>
-                        </div>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {filtered.map((eq) => (
+                        <Card key={eq.id} className="group hover:shadow-md transition-shadow">
+                            <CardContent className="p-4">
+                                <div className="flex items-start justify-between gap-2">
+                                    <div className="flex-1 min-w-0">
+                                        <Badge className={`${TYPE_COLORS[eq.type]} text-white text-xs mb-2`}>
+                                            {TYPE_LABELS[eq.type]}
+                                        </Badge>
+                                        <p className="font-semibold text-sm leading-tight truncate">{eq.brand}</p>
+                                        <p className="text-muted-foreground text-sm truncate">{eq.model}</p>
+                                    </div>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                                            >
+                                                <MoreHorizontal className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuItem onClick={() => openEditDialog(eq)}>
+                                                <Pencil className="mr-2 h-4 w-4" />
+                                                Editar
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem
+                                                className="text-destructive"
+                                                onClick={() => handleDelete(eq.id)}
+                                            >
+                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                Excluir
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </div>
+                            </CardContent>
+                        </Card>
                     ))}
                 </div>
             )}
