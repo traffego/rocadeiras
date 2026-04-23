@@ -14,7 +14,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import {
     Dialog,
     DialogContent,
@@ -30,20 +29,12 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select'
 import { toast } from 'sonner'
 
-const EMPTY_FORM = { name: '', brand_id: '' }
+const EMPTY_FORM = { name: '' }
 
 export default function Models() {
     const [search, setSearch] = useState('')
-    const [brandFilter, setBrandFilter] = useState('all')
     const [dialogOpen, setDialogOpen] = useState(false)
     const [editingModel, setEditingModel] = useState(null)
     const [formData, setFormData] = useState(EMPTY_FORM)
@@ -55,16 +46,12 @@ export default function Models() {
         queryFn: api.models.list
     })
 
-    const { data: brands = [] } = useQuery({
-        queryKey: ['brands'],
-        queryFn: api.brands.list
-    })
-
     const createMutation = useMutation({
         mutationFn: api.models.create,
         onSuccess: () => {
             queryClient.invalidateQueries(['models'])
             setDialogOpen(false)
+            setFormData(EMPTY_FORM)
             toast.success('Modelo cadastrado!')
         },
         onError: (e) => toast.error('Erro: ' + e.message)
@@ -89,13 +76,9 @@ export default function Models() {
         onError: (e) => toast.error('Erro: ' + e.message)
     })
 
-    const filtered = models.filter(m => {
-        const matchesBrand = brandFilter === 'all' || m.brand_id === brandFilter
-        const matchesSearch =
-            m.name.toLowerCase().includes(search.toLowerCase()) ||
-            (m.brand?.name || '').toLowerCase().includes(search.toLowerCase())
-        return matchesBrand && matchesSearch
-    })
+    const filtered = models.filter(m =>
+        m.name.toLowerCase().includes(search.toLowerCase())
+    )
 
     const openNewDialog = () => {
         setEditingModel(null)
@@ -105,7 +88,7 @@ export default function Models() {
 
     const openEditDialog = (model) => {
         setEditingModel(model)
-        setFormData({ name: model.name, brand_id: model.brand_id })
+        setFormData({ name: model.name })
         setDialogOpen(true)
     }
 
@@ -119,7 +102,7 @@ export default function Models() {
     }
 
     const isSaving = createMutation.isPending || updateMutation.isPending
-    const isFormValid = formData.name.trim() && formData.brand_id
+    const isFormValid = formData.name.trim()
 
     if (isLoading) return <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>
 
@@ -143,25 +126,16 @@ export default function Models() {
                         <DialogHeader>
                             <DialogTitle>{editingModel ? 'Editar Modelo' : 'Novo Modelo'}</DialogTitle>
                             <DialogDescription>
-                                {editingModel ? 'Atualize os dados do modelo' : 'Preencha os dados para cadastrar um novo modelo'}
+                                {editingModel ? 'Atualize o nome do modelo' : 'Informe o nome do modelo'}
                             </DialogDescription>
                         </DialogHeader>
                         <div className="space-y-4 py-4">
-                            <div className="space-y-2">
-                                <Label>Marca *</Label>
-                                <Select value={formData.brand_id} onValueChange={(v) => setFormData(prev => ({ ...prev, brand_id: v }))}>
-                                    <SelectTrigger><SelectValue placeholder="Selecione a marca..." /></SelectTrigger>
-                                    <SelectContent>
-                                        {brands.map(b => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
-                            </div>
                             <div className="space-y-2">
                                 <Label htmlFor="model-name">Nome *</Label>
                                 <Input
                                     id="model-name"
                                     value={formData.name}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                                    onChange={(e) => setFormData({ name: e.target.value })}
                                     placeholder="Ex: FS 55"
                                     onKeyDown={(e) => e.key === 'Enter' && isFormValid && handleSubmit()}
                                 />
@@ -178,26 +152,15 @@ export default function Models() {
                 </Dialog>
             </div>
 
-            {/* Filters */}
-            <div className="flex flex-col sm:flex-row gap-3">
-                <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                        placeholder="Buscar por nome ou marca..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="pl-10"
-                    />
-                </div>
-                <Select value={brandFilter} onValueChange={setBrandFilter}>
-                    <SelectTrigger className="w-full sm:w-48">
-                        <SelectValue placeholder="Filtrar por marca..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">Todas as marcas</SelectItem>
-                        {brands.map(b => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
-                    </SelectContent>
-                </Select>
+            {/* Search */}
+            <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                    placeholder="Buscar por nome..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="pl-10"
+                />
             </div>
 
             {/* Cards */}
@@ -214,12 +177,7 @@ export default function Models() {
                         <Card key={model.id} className="group hover:shadow-md transition-shadow">
                             <CardContent className="p-4">
                                 <div className="flex items-center justify-between gap-2">
-                                    <div className="flex flex-col min-w-0">
-                                        <span className="font-semibold text-sm truncate">{model.name}</span>
-                                        <Badge variant="secondary" className="w-fit mt-1 text-xs">
-                                            {model.brand?.name}
-                                        </Badge>
-                                    </div>
+                                    <span className="font-semibold text-sm truncate">{model.name}</span>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                             <Button

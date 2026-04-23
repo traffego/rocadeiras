@@ -83,7 +83,8 @@ export default function Equipments() {
         queryFn: api.models.list
     })
 
-    const filteredModels = allModels.filter(m => m.brand_id === formData.brand_id)
+    // Models are brand-agnostic — show all, no brand filtering
+    const filteredModels = allModels
 
     const { data: equipmentTypes = [] } = useQuery({
         queryKey: ['equipmentTypes'],
@@ -128,7 +129,7 @@ export default function Equipments() {
     })
 
     const filtered = equipments.filter(e => {
-        const brandName = e.model_data?.brand?.name || ''
+        const brandName = e.brand?.name || ''
         const typeName = e.equipment_type?.name || ''
         const typeSlug = e.equipment_type?.slug || ''
         const matchesType = typeFilter === 'all' || typeSlug === typeFilter
@@ -159,7 +160,7 @@ export default function Equipments() {
 
     const openEditDialog = (eq) => {
         setEditingEquipment(eq)
-        setFormData({ type_id: eq.equipment_type?.id || '', brand_id: eq.model_data?.brand?.id || '', model_id: eq.model_id || '' })
+        setFormData({ type_id: eq.equipment_type?.id || '', brand_id: eq.brand?.id || '', model_id: eq.model_id || '' })
         setDialogOpen(true)
     }
 
@@ -332,7 +333,7 @@ export default function Equipments() {
                                             <Badge className={`${TYPE_COLORS[slug] || 'bg-gray-500'} text-white text-xs mb-2`}>
                                                 {eq.equipment_type?.name || 'Sem tipo'}
                                             </Badge>
-                                            <p className="font-semibold text-sm leading-tight truncate">{eq.model_data?.brand?.name}</p>
+                                            <p className="font-semibold text-sm leading-tight truncate">{eq.brand?.name}</p>
                                             <p className="text-muted-foreground text-sm truncate">{eq.model_data?.name}</p>
                                         </div>
                                         <DropdownMenu>

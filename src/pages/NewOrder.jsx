@@ -493,12 +493,9 @@ export default function NewOrder() {
                                         <SelectValue placeholder={!formData.equipment_brand_id ? 'Selecione a marca primeiro' : 'Selecione o modelo...'} />
                                     </SelectTrigger>
                                     <SelectContent className="h-64">
-                                        {allModels
-                                            .filter(m => m.brand_id === formData.equipment_brand_id)
-                                            .map(m => (
-                                                <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
-                                            ))
-                                        }
+                                        {allModels.map(m => (
+                                            <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                                        ))}
                                     </SelectContent>
                                 </Select>
                             </div>
