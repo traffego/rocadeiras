@@ -87,6 +87,30 @@ export default function NewOrder() {
         queryFn: api.models.list
     })
 
+    // Combinações tipo+marca+modelo para filtro em cascata
+    const { data: combinations = [] } = useQuery({
+        queryKey: ['equipmentCombinations'],
+        queryFn: api.equipments.listCombinations
+    })
+
+    // Marcas disponíveis para o tipo selecionado
+    const filteredBrands = formData.equipment_type_id
+        ? brands.filter(b =>
+            combinations.some(c => c.type_id === formData.equipment_type_id && c.brand_id === b.id)
+          )
+        : brands
+
+    // Modelos disponíveis para o tipo + marca selecionados
+    const filteredModels = (formData.equipment_type_id && formData.equipment_brand_id)
+        ? allModels.filter(m =>
+            combinations.some(c =>
+                c.type_id === formData.equipment_type_id &&
+                c.brand_id === formData.equipment_brand_id &&
+                c.model_id === m.id
+            )
+          )
+        : allModels
+
     // Create Customer Mutation
     const createCustomerMutation = useMutation({
         mutationFn: api.customers.create
@@ -473,7 +497,11 @@ export default function NewOrder() {
                             <Label>Tipo de Equipamento *</Label>
                             <SearchableSelect
                                 value={formData.equipment_type_id}
-                                onValueChange={(v) => updateForm('equipment_type_id', v)}
+                                onValueChange={(v) => {
+                                    updateForm('equipment_type_id', v)
+                                    updateForm('equipment_brand_id', '')
+                                    updateForm('equipment_model_id', '')
+                                }}
                                 options={equipmentTypes}
                                 placeholder="Selecione o tipo..."
                                 searchPlaceholder="Buscar tipo..."
@@ -489,9 +517,10 @@ export default function NewOrder() {
                                         updateForm('equipment_brand_id', v)
                                         updateForm('equipment_model_id', '')
                                     }}
-                                    options={brands}
-                                    placeholder="Selecione a marca..."
+                                    options={filteredBrands}
+                                    placeholder={!formData.equipment_type_id ? 'Selecione o tipo primeiro' : 'Selecione a marca...'}
                                     searchPlaceholder="Buscar marca..."
+                                    disabled={!formData.equipment_type_id}
                                 />
                             </div>
                             <div className="space-y-2">
@@ -499,8 +528,8 @@ export default function NewOrder() {
                                 <SearchableSelect
                                     value={formData.equipment_model_id}
                                     onValueChange={(v) => updateForm('equipment_model_id', v)}
-                                    options={allModels}
-                                    placeholder="Selecione o modelo..."
+                                    options={filteredModels}
+                                    placeholder={!formData.equipment_brand_id ? 'Selecione a marca primeiro' : 'Selecione o modelo...'}
                                     searchPlaceholder="Buscar modelo..."
                                     disabled={!formData.equipment_brand_id}
                                 />

@@ -300,6 +300,14 @@ export const api = {
             if (error) throw error
             return data
         },
+        // Lightweight: só IDs para filtro em cascata no formulário
+        listCombinations: async () => {
+            const { data, error } = await supabase
+                .from('equipment_models')
+                .select('type_id, brand_id, model_id')
+            if (error) throw error
+            return data
+        },
         create: async (equipment) => {
             const { data, error } = await supabase
                 .from('equipment_models')
