@@ -282,10 +282,10 @@ export default function NewOrder() {
                     return formData.equipment_type_custom &&
                         formData.equipment_brand_custom &&
                         formData.equipment_model_custom &&
-                        formData.reported_defect
+                        formData.reported_defect && formData.technician_id
                 }
                 return formData.equipment_type_id && formData.equipment_brand_id &&
-                    formData.equipment_model_id && formData.reported_defect
+                    formData.equipment_model_id && formData.reported_defect && formData.technician_id
             case 3:
                 return formData.machine_turns_on !== null && formData.was_stopped !== null &&
                     formData.has_accessories !== null && formData.budget_authorized !== null
@@ -582,27 +582,18 @@ export default function NewOrder() {
                             />
                         </div>
 
-                        <div className="space-y-2 pt-4 border-t bg-indigo-50/30 -mx-6 px-6 pb-4">
-                            <Label htmlFor="tech" className="text-indigo-700 font-bold flex items-center gap-2">
+                        <div className="space-y-2 pt-4 border-t">
+                            <Label className="font-semibold flex items-center gap-2">
                                 <Wrench className="h-4 w-4" />
-                                Técnico Responsável (opcional)
+                                Técnico Responsável *
                             </Label>
-                            <Select
-                                value={formData.technician_id || "none"}
-                                onValueChange={(v) => updateForm('technician_id', v === "none" ? "" : v)}
-                            >
-                                <SelectTrigger className="bg-background border-indigo-200">
-                                    <SelectValue placeholder="Selecione um técnico..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="none">Nenhum</SelectItem>
-                                    {technicians.map(tech => (
-                                        <SelectItem key={tech.id} value={tech.id}>
-                                            {tech.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <SearchableSelect
+                                value={formData.technician_id}
+                                onValueChange={(v) => updateForm('technician_id', v)}
+                                options={technicians}
+                                placeholder="Selecione o técnico..."
+                                searchPlaceholder="Buscar técnico..."
+                            />
                         </div>
                     </CardContent>
                 </Card>
