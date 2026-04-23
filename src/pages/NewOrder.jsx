@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/select"
 import { toast } from 'sonner'
 import { uploadToR2 } from '@/lib/r2'
+import { SearchableSelect } from '@/components/SearchableSelect'
 
 const steps = [
     { id: 1, name: 'Cliente', icon: User },
@@ -450,54 +451,39 @@ export default function NewOrder() {
                     <CardContent className="space-y-4">
                         <div className="space-y-2">
                             <Label>Tipo de Equipamento *</Label>
-                            <Select value={formData.equipment_type_id} onValueChange={(v) => updateForm('equipment_type_id', v)}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Selecione o tipo..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {equipmentTypes.map(t => (
-                                        <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <SearchableSelect
+                                value={formData.equipment_type_id}
+                                onValueChange={(v) => updateForm('equipment_type_id', v)}
+                                options={equipmentTypes}
+                                placeholder="Selecione o tipo..."
+                                searchPlaceholder="Buscar tipo..."
+                            />
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label>Marca *</Label>
-                                <Select
+                                <SearchableSelect
                                     value={formData.equipment_brand_id}
                                     onValueChange={(v) => {
                                         updateForm('equipment_brand_id', v)
                                         updateForm('equipment_model_id', '')
                                     }}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Selecione a marca..." />
-                                    </SelectTrigger>
-                                    <SelectContent className="h-64">
-                                        {brands.map(b => (
-                                            <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                    options={brands}
+                                    placeholder="Selecione a marca..."
+                                    searchPlaceholder="Buscar marca..."
+                                />
                             </div>
                             <div className="space-y-2">
                                 <Label>Modelo *</Label>
-                                <Select
+                                <SearchableSelect
                                     value={formData.equipment_model_id}
                                     onValueChange={(v) => updateForm('equipment_model_id', v)}
+                                    options={allModels}
+                                    placeholder="Selecione o modelo..."
+                                    searchPlaceholder="Buscar modelo..."
                                     disabled={!formData.equipment_brand_id}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder={!formData.equipment_brand_id ? 'Selecione a marca primeiro' : 'Selecione o modelo...'} />
-                                    </SelectTrigger>
-                                    <SelectContent className="h-64">
-                                        {allModels.map(m => (
-                                            <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                />
                             </div>
                         </div>
 
