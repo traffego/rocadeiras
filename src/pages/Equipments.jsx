@@ -134,7 +134,7 @@ export default function Equipments() {
         const matchesType = typeFilter === 'all' || typeSlug === typeFilter
         const matchesSearch =
             brandName.toLowerCase().includes(search.toLowerCase()) ||
-            e.model?.name?.toLowerCase().includes(search.toLowerCase()) ||
+            e.model_data?.name?.toLowerCase().includes(search.toLowerCase()) ||
             typeName.toLowerCase().includes(search.toLowerCase())
         return matchesType && matchesSearch
     })
@@ -333,7 +333,7 @@ export default function Equipments() {
                                                 {eq.equipment_type?.name || 'Sem tipo'}
                                             </Badge>
                                             <p className="font-semibold text-sm leading-tight truncate">{eq.brand?.name}</p>
-                                            <p className="text-muted-foreground text-sm truncate">{eq.model?.name}</p>
+                                            <p className="text-muted-foreground text-sm truncate">{eq.model_data?.name}</p>
                                         </div>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>

@@ -295,8 +295,8 @@ export const api = {
         list: async () => {
             const { data, error } = await supabase
                 .from('equipment_models')
-                .select('*, brand:brands(id, name), equipment_type:equipment_types(id, name, slug), model:models(id, name)')
-                .order('model')
+                .select('*, brand:brands(id, name), equipment_type:equipment_types(id, name, slug), model_data:models(id, name)')
+                .order('created_at', { ascending: false })
             if (error) throw error
             return data
         },
@@ -304,7 +304,7 @@ export const api = {
             const { data, error } = await supabase
                 .from('equipment_models')
                 .insert(equipment)
-                .select('*, brand:brands(id, name), equipment_type:equipment_types(id, name, slug), model:models(id, name)')
+                .select('*, brand:brands(id, name), equipment_type:equipment_types(id, name, slug), model_data:models(id, name)')
                 .single()
             if (error) throw error
             return data
@@ -314,7 +314,7 @@ export const api = {
                 .from('equipment_models')
                 .update(updates)
                 .eq('id', id)
-                .select('*, brand:brands(id, name), equipment_type:equipment_types(id, name, slug), model:models(id, name)')
+                .select('*, brand:brands(id, name), equipment_type:equipment_types(id, name, slug), model_data:models(id, name)')
                 .single()
             if (error) throw error
             return data
