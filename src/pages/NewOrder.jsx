@@ -43,6 +43,7 @@ export default function NewOrder() {
     const navigate = useNavigate()
     const [currentStep, setCurrentStep] = useState(1)
     const [isNewClient, setIsNewClient] = useState(false)
+    const [equipmentNotInList, setEquipmentNotInList] = useState(false)
     const [loading, setLoading] = useState(false)
     const [uploadedFiles, setUploadedFiles] = useState([])
     const [uploading, setUploading] = useState(false)
@@ -112,6 +113,9 @@ export default function NewOrder() {
         equipment_type_id: '',
         equipment_brand_id: '',
         equipment_model_id: '',
+        equipment_type_custom: '',
+        equipment_brand_custom: '',
+        equipment_model_custom: '',
         equipment_serial: '',
         reported_defect: '',
         technician_id: '',
@@ -207,8 +211,17 @@ export default function NewOrder() {
             // Create Order
             const orderData = {
                 customer_id: customerId,
-                equipment_type_id: formData.equipment_type_id,
-                equipment_model_id: formData.equipment_model_id,
+                ...(equipmentNotInList
+                    ? {
+                        equipment_type: formData.equipment_type_custom,
+                        equipment_brand: formData.equipment_brand_custom,
+                        equipment_model: formData.equipment_model_custom,
+                    }
+                    : {
+                        equipment_type_id: formData.equipment_type_id,
+                        equipment_model_id: formData.equipment_model_id,
+                    }
+                ),
                 equipment_serial: formData.equipment_serial,
                 reported_defect: formData.reported_defect,
                 machine_turns_on: formData.machine_turns_on,
@@ -265,6 +278,12 @@ export default function NewOrder() {
                 }
                 return formData.customer_id
             case 2:
+                if (equipmentNotInList) {
+                    return formData.equipment_type_custom &&
+                        formData.equipment_brand_custom &&
+                        formData.equipment_model_custom &&
+                        formData.reported_defect
+                }
                 return formData.equipment_type_id && formData.equipment_brand_id &&
                     formData.equipment_model_id && formData.reported_defect
             case 3:
@@ -486,6 +505,61 @@ export default function NewOrder() {
                                 />
                             </div>
                         </div>
+
+                        {/* Checkbox: não está na lista */}
+                        <div className="flex items-center gap-2 py-1">
+                            <input
+                                type="checkbox"
+                                id="not-in-list"
+                                checked={equipmentNotInList}
+                                onChange={(e) => {
+                                    setEquipmentNotInList(e.target.checked)
+                                    if (e.target.checked) {
+                                        updateForm('equipment_type_id', '')
+                                        updateForm('equipment_brand_id', '')
+                                        updateForm('equipment_model_id', '')
+                                    } else {
+                                        updateForm('equipment_type_custom', '')
+                                        updateForm('equipment_brand_custom', '')
+                                        updateForm('equipment_model_custom', '')
+                                    }
+                                }}
+                                className="h-4 w-4 rounded border-border accent-primary cursor-pointer"
+                            />
+                            <label htmlFor="not-in-list" className="text-sm text-muted-foreground cursor-pointer select-none">
+                                O equipamento não está na lista
+                            </label>
+                        </div>
+
+                        {/* Campos de texto livre quando não está na lista */}
+                        {equipmentNotInList && (
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 rounded-lg border border-dashed border-border bg-muted/30">
+                                <div className="space-y-2">
+                                    <Label>Tipo *</Label>
+                                    <Input
+                                        value={formData.equipment_type_custom}
+                                        onChange={(e) => updateForm('equipment_type_custom', e.target.value)}
+                                        placeholder="Ex: Roçadeira"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Marca *</Label>
+                                    <Input
+                                        value={formData.equipment_brand_custom}
+                                        onChange={(e) => updateForm('equipment_brand_custom', e.target.value)}
+                                        placeholder="Ex: Stihl"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Modelo *</Label>
+                                    <Input
+                                        value={formData.equipment_model_custom}
+                                        onChange={(e) => updateForm('equipment_model_custom', e.target.value)}
+                                        placeholder="Ex: FS 55"
+                                    />
+                                </div>
+                            </div>
+                        )}
 
                         <div className="space-y-2">
                             <Label htmlFor="serial">Número de Série (opcional)</Label>
