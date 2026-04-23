@@ -1,75 +1,64 @@
-import { supabase } from '@/lib/supabase'
-
 /**
- * Storage providers: 'supabase' (default), 'r2', 'youtube'
+ * Storage service — Cloudinary (unsigned upload)
+ * Cloud: dymhrqo3i | Preset: ml_default
  */
-const STORAGE_CONFIG = {
-    provider: 'supabase', // In the future, this can be fetched from a settings table or env
-}
+
+const CLOUDINARY_CLOUD = 'dymhrqo3i'
+const CLOUDINARY_PRESET = 'ml_default'
+const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/upload`
 
 export const storage = {
     /**
-     * Upload a file according to the configured provider
+     * Upload a file to Cloudinary
      * @param {File} file - The file object to upload
-     * @param {string} folder - Target folder (e.g., 'orders/123')
+     * @param {string} folder - Cloudinary folder (e.g., 'orders/123')
      */
     upload: async (file, folder = 'general') => {
-        if (STORAGE_CONFIG.provider === 'supabase') {
-            const fileExt = file.name.split('.').pop()
-            const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
-            const filePath = `${folder}/${fileName}`
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('upload_preset', CLOUDINARY_PRESET)
+        formData.append('folder', `rocadeiras/${folder}`)
 
-            const { data, error } = await supabase.storage
-                .from('service-orders')
-                .upload(filePath, file)
+        const response = await fetch(CLOUDINARY_URL, {
+            method: 'POST',
+            body: formData,
+        })
 
-            if (error) throw error
-
-            // Get public URL
-            const { data: { publicUrl } } = supabase.storage
-                .from('service-orders')
-                .getPublicUrl(filePath)
-
-            return {
-                url: publicUrl,
-                path: filePath,
-                provider: 'supabase'
-            }
+        if (!response.ok) {
+            const err = await response.json()
+            throw new Error(err.error?.message || 'Erro no upload')
         }
 
-        if (STORAGE_CONFIG.provider === 'r2') {
-            // Placeholder for R2 implementation
-            throw new Error("R2 storage provider is currently disabled.")
-        }
+        const data = await response.json()
 
-        throw new Error("Invalid storage provider configuration.")
+        return {
+            url: data.secure_url,
+            path: data.public_id,   // public_id serves as the path for deletion
+            provider: 'cloudinary',
+            width: data.width,
+            height: data.height,
+            format: data.format,
+        }
     },
 
     /**
-     * For YouTube or other external links, we don't upload, just validate/process
+     * Delete a file from Cloudinary
+     * Note: unsigned presets typically restrict deletion.
+     * Deletion via API requires signing — we skip it silently.
+     */
+    delete: async (path, provider = 'cloudinary') => {
+        // Cloudinary unsigned deletion is not supported without a server.
+        // Files will be managed via the Cloudinary dashboard or a cleanup job.
+        console.info(`[storage] Skipping delete for ${provider}:${path} (unsigned preset)`)
+    },
+
+    /**
+     * For external links (YouTube etc.)
      */
     processExternalLink: async (url, type = 'youtube') => {
         if (type === 'youtube') {
-            // Extract ID or just return the URL if already formatted
-            // Structure: https://www.youtube.com/embed/ID
-            return {
-                url: url,
-                provider: 'youtube'
-            }
+            return { url, provider: 'youtube' }
         }
-        throw new Error("Invalid external link type.")
+        throw new Error('Invalid external link type.')
     },
-
-    /**
-     * Delete a file
-     */
-    delete: async (path, provider = 'supabase') => {
-        if (provider === 'supabase') {
-            const { error } = await supabase.storage
-                .from('service-orders')
-                .remove([path])
-            if (error) throw error
-        }
-        // R2 delete would go here
-    }
 }

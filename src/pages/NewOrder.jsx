@@ -48,6 +48,7 @@ export default function NewOrder() {
     const [uploadedFiles, setUploadedFiles] = useState([])
     const [uploading, setUploading] = useState(false)
     const fileInputRef = useRef(null)
+    const cameraInputRef = useRef(null)
 
     // Customer combobox state
     const [customerSearch, setCustomerSearch] = useState('')
@@ -759,26 +760,51 @@ export default function NewOrder() {
 
                         {/* Entry Files */}
                         <div className="space-y-4 pt-4 border-t">
-                            <div className="flex items-center justify-between">
-                                <Label className="text-indigo-700 font-bold flex items-center gap-2">
+                            <div className="flex items-center justify-between flex-wrap gap-2">
+                                <Label className="font-semibold flex items-center gap-2">
                                     <Camera className="h-4 w-4" />
                                     Fotos de Entrada
                                 </Label>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    className="border-indigo-200 text-indigo-700"
-                                    onClick={() => fileInputRef.current?.click()}
-                                    disabled={uploading}
-                                >
-                                    {uploading ? (
-                                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                                    ) : (
-                                        <Upload className="h-4 w-4 mr-2" />
-                                    )}
-                                    Anexar Mídia
-                                </Button>
+                                <div className="flex gap-2">
+                                    {/* Câmera — abre direto a câmera no mobile */}
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => cameraInputRef.current?.click()}
+                                        disabled={uploading}
+                                    >
+                                        {uploading
+                                            ? <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                            : <Camera className="h-4 w-4 mr-2" />
+                                        }
+                                        Câmera
+                                    </Button>
+                                    {/* Galeria / Arquivo */}
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        disabled={uploading}
+                                    >
+                                        {uploading
+                                            ? <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                            : <Upload className="h-4 w-4 mr-2" />
+                                        }
+                                        Galeria
+                                    </Button>
+                                </div>
+                                {/* Input câmera — capture=environment abre câmera traseira no mobile */}
+                                <input
+                                    type="file"
+                                    ref={cameraInputRef}
+                                    className="hidden"
+                                    accept="image/*,video/*"
+                                    capture="environment"
+                                    onChange={handleFileUpload}
+                                />
+                                {/* Input galeria — múltiplos arquivos */}
                                 <input
                                     type="file"
                                     ref={fileInputRef}
