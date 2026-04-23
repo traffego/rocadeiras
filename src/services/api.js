@@ -291,8 +291,7 @@ export const api = {
         list: async () => {
             const { data, error } = await supabase
                 .from('equipment_models')
-                .select('*')
-                .order('brand')
+                .select('*, brand:brands(id, name)')
                 .order('model')
             if (error) throw error
             return data
@@ -301,7 +300,7 @@ export const api = {
             const { data, error } = await supabase
                 .from('equipment_models')
                 .insert(equipment)
-                .select()
+                .select('*, brand:brands(id, name)')
                 .single()
             if (error) throw error
             return data
@@ -311,7 +310,7 @@ export const api = {
                 .from('equipment_models')
                 .update(updates)
                 .eq('id', id)
-                .select()
+                .select('*, brand:brands(id, name)')
                 .single()
             if (error) throw error
             return data
@@ -319,6 +318,58 @@ export const api = {
         delete: async (id) => {
             const { error } = await supabase
                 .from('equipment_models')
+                .delete()
+                .eq('id', id)
+            if (error) throw error
+        },
+        bulkUpdate: async (ids, updates) => {
+            const { error } = await supabase
+                .from('equipment_models')
+                .update(updates)
+                .in('id', ids)
+            if (error) throw error
+        },
+        bulkDelete: async (ids) => {
+            const { error } = await supabase
+                .from('equipment_models')
+                .delete()
+                .in('id', ids)
+            if (error) throw error
+        }
+    },
+
+    // Brands
+    brands: {
+        list: async () => {
+            const { data, error } = await supabase
+                .from('brands')
+                .select('*')
+                .order('name')
+            if (error) throw error
+            return data
+        },
+        create: async (brand) => {
+            const { data, error } = await supabase
+                .from('brands')
+                .insert(brand)
+                .select()
+                .single()
+            if (error) throw error
+            return data
+        },
+        update: async (id, updates) => {
+            const { data, error } = await supabase
+                .from('brands')
+                .update(updates)
+                .eq('id', id)
+                .select()
+                .single()
+            if (error) throw error
+            return data
+        },
+        delete: async (id) => {
+            const { error } = await supabase
+                .from('brands')
                 .delete()
                 .eq('id', id)
             if (error) throw error

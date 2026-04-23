@@ -6,7 +6,12 @@ import {
     Pencil,
     Trash2,
     Loader2,
-    Cpu
+    Cpu,
+    CheckSquare,
+    Square,
+    X,
+    Tag,
+    Layers
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/services/api'
@@ -51,7 +56,7 @@ const TYPE_COLORS = {
     sprayer: 'bg-blue-500',
 }
 
-const EMPTY_FORM = { type: '', brand: '', model: '' }
+const EMPTY_FORM = { type: '', brand_id: '', model: '' }
 
 export default function Equipments() {
     const [search, setSearch] = useState('')
@@ -60,11 +65,22 @@ export default function Equipments() {
     const [editingEquipment, setEditingEquipment] = useState(null)
     const [formData, setFormData] = useState(EMPTY_FORM)
 
+    // Bulk selection state
+    const [selectedIds, setSelectedIds] = useState(new Set())
+    const [bulkDialogOpen, setBulkDialogOpen] = useState(false)
+    const [bulkField, setBulkField] = useState(null) // 'type' | 'brand'
+    const [bulkValue, setBulkValue] = useState('')
+
     const queryClient = useQueryClient()
 
     const { data: equipments = [], isLoading } = useQuery({
         queryKey: ['equipments'],
         queryFn: api.equipments.list
+    })
+
+    const { data: brands = [] } = useQuery({
+        queryKey: ['brands'],
+        queryFn: api.brands.list
     })
 
     const createMutation = useMutation({
@@ -96,15 +112,61 @@ export default function Equipments() {
         onError: (e) => toast.error('Erro ao remover: ' + e.message)
     })
 
+    const bulkUpdateMutation = useMutation({
+        mutationFn: ({ ids, updates }) => api.equipments.bulkUpdate(ids, updates),
+        onSuccess: () => {
+            queryClient.invalidateQueries(['equipments'])
+            setBulkDialogOpen(false)
+            setBulkValue('')
+            setSelectedIds(new Set())
+            toast.success(`${selectedIds.size} equipamento(s) atualizado(s)!`)
+        },
+        onError: (e) => toast.error('Erro ao atualizar: ' + e.message)
+    })
+
+    const bulkDeleteMutation = useMutation({
+        mutationFn: (ids) => api.equipments.bulkDelete(ids),
+        onSuccess: () => {
+            queryClient.invalidateQueries(['equipments'])
+            setSelectedIds(new Set())
+            toast.success('Equipamentos removidos!')
+        },
+        onError: (e) => toast.error('Erro ao remover: ' + e.message)
+    })
+
     const filtered = equipments.filter(e => {
+        const brandName = e.brand?.name || ''
         const matchesType = typeFilter === 'all' || e.type === typeFilter
         const matchesSearch =
-            e.brand.toLowerCase().includes(search.toLowerCase()) ||
+            brandName.toLowerCase().includes(search.toLowerCase()) ||
             e.model.toLowerCase().includes(search.toLowerCase()) ||
             (TYPE_LABELS[e.type] || '').toLowerCase().includes(search.toLowerCase())
         return matchesType && matchesSearch
     })
 
+    // Selection helpers
+    const isSelectionMode = selectedIds.size > 0
+    const allFilteredSelected = filtered.length > 0 && filtered.every(e => selectedIds.has(e.id))
+
+    const toggleSelect = (id) => {
+        setSelectedIds(prev => {
+            const next = new Set(prev)
+            next.has(id) ? next.delete(id) : next.add(id)
+            return next
+        })
+    }
+
+    const toggleSelectAll = () => {
+        if (allFilteredSelected) {
+            setSelectedIds(new Set())
+        } else {
+            setSelectedIds(new Set(filtered.map(e => e.id)))
+        }
+    }
+
+    const clearSelection = () => setSelectedIds(new Set())
+
+    // Single item actions
     const openNewDialog = () => {
         setEditingEquipment(null)
         setFormData(EMPTY_FORM)
@@ -113,7 +175,7 @@ export default function Equipments() {
 
     const openEditDialog = (eq) => {
         setEditingEquipment(eq)
-        setFormData({ type: eq.type, brand: eq.brand, model: eq.model })
+        setFormData({ type: eq.type, brand_id: eq.brand?.id || '', model: eq.model })
         setDialogOpen(true)
     }
 
@@ -131,15 +193,37 @@ export default function Equipments() {
         }
     }
 
+    // Bulk actions
+    const openBulkDialog = (field) => {
+        setBulkField(field)
+        setBulkValue('')
+        setBulkDialogOpen(true)
+    }
+
+    const handleBulkUpdate = () => {
+        const updates = bulkField === 'type'
+            ? { type: bulkValue }
+            : { brand_id: bulkValue }
+        bulkUpdateMutation.mutate({ ids: [...selectedIds], updates })
+    }
+
+    const handleBulkDelete = () => {
+        const count = selectedIds.size
+        if (confirm(`Tem certeza que deseja excluir ${count} equipamento(s)?`)) {
+            bulkDeleteMutation.mutate([...selectedIds])
+        }
+    }
+
     const isSaving = createMutation.isPending || updateMutation.isPending
-    const isFormValid = formData.type && formData.brand.trim() && formData.model.trim()
+    const isFormValid = formData.type && formData.brand_id && formData.model.trim()
+    const isBulkSaving = bulkUpdateMutation.isPending || bulkDeleteMutation.isPending
 
     if (isLoading) {
         return <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 pb-24">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
@@ -182,13 +266,17 @@ export default function Equipments() {
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="brand">Marca *</Label>
-                                <Input
-                                    id="brand"
-                                    value={formData.brand}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, brand: e.target.value }))}
-                                    placeholder="Ex: Stihl"
-                                />
+                                <Label>Marca *</Label>
+                                <Select value={formData.brand_id} onValueChange={(v) => setFormData(prev => ({ ...prev, brand_id: v }))}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Selecione a marca..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {brands.map(b => (
+                                            <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="model">Modelo *</Label>
@@ -224,7 +312,7 @@ export default function Equipments() {
                         className="pl-10"
                     />
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                     {['all', 'brush_cutter', 'chainsaw', 'sprayer'].map(type => (
                         <Button
                             key={type}
@@ -238,6 +326,24 @@ export default function Equipments() {
                 </div>
             </div>
 
+            {/* Select-all bar (shown when any selected) */}
+            {isSelectionMode && (
+                <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                    <button
+                        onClick={toggleSelectAll}
+                        className="flex items-center gap-1.5 hover:text-foreground transition-colors"
+                    >
+                        {allFilteredSelected
+                            ? <CheckSquare className="h-4 w-4 text-primary" />
+                            : <Square className="h-4 w-4" />
+                        }
+                        {allFilteredSelected ? 'Desmarcar todos' : 'Selecionar todos'}
+                    </button>
+                    <span className="text-muted-foreground">•</span>
+                    <span>{selectedIds.size} selecionado(s)</span>
+                </div>
+            )}
+
             {/* Cards Grid */}
             {filtered.length === 0 ? (
                 <Card>
@@ -248,47 +354,176 @@ export default function Equipments() {
                 </Card>
             ) : (
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {filtered.map((eq) => (
-                        <Card key={eq.id} className="group hover:shadow-md transition-shadow">
-                            <CardContent className="p-4">
-                                <div className="flex items-start justify-between gap-2">
-                                    <div className="flex-1 min-w-0">
-                                        <Badge className={`${TYPE_COLORS[eq.type]} text-white text-xs mb-2`}>
-                                            {TYPE_LABELS[eq.type]}
-                                        </Badge>
-                                        <p className="font-semibold text-sm leading-tight truncate">{eq.brand}</p>
-                                        <p className="text-muted-foreground text-sm truncate">{eq.model}</p>
+                    {filtered.map((eq) => {
+                        const isSelected = selectedIds.has(eq.id)
+                        return (
+                            <Card
+                                key={eq.id}
+                                onClick={() => toggleSelect(eq.id)}
+                                className={`group cursor-pointer transition-all ${
+                                    isSelected
+                                        ? 'ring-2 ring-primary shadow-md'
+                                        : 'hover:shadow-md'
+                                }`}
+                            >
+                                <CardContent className="p-4">
+                                    <div className="flex items-start justify-between gap-2">
+                                        {/* Checkbox */}
+                                        <div className="flex-shrink-0 mt-0.5">
+                                            {isSelected
+                                                ? <CheckSquare className="h-4 w-4 text-primary" />
+                                                : <Square className={`h-4 w-4 text-muted-foreground ${isSelectionMode ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`} />
+                                            }
+                                        </div>
+
+                                        {/* Info */}
+                                        <div className="flex-1 min-w-0">
+                                            <Badge className={`${TYPE_COLORS[eq.type]} text-white text-xs mb-2`}>
+                                                {TYPE_LABELS[eq.type]}
+                                            </Badge>
+                                            <p className="font-semibold text-sm leading-tight truncate">{eq.brand?.name}</p>
+                                            <p className="text-muted-foreground text-sm truncate">{eq.model}</p>
+                                        </div>
+
+                                        {/* Actions (individual) — stop propagation so click doesn't toggle selection */}
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    <MoreHorizontal className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openEditDialog(eq) }}>
+                                                    <Pencil className="mr-2 h-4 w-4" />
+                                                    Editar
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    className="text-destructive"
+                                                    onClick={(e) => { e.stopPropagation(); handleDelete(eq.id) }}
+                                                >
+                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                    Excluir
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </div>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-                                            >
-                                                <MoreHorizontal className="h-4 w-4" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            <DropdownMenuItem onClick={() => openEditDialog(eq)}>
-                                                <Pencil className="mr-2 h-4 w-4" />
-                                                Editar
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem
-                                                className="text-destructive"
-                                                onClick={() => handleDelete(eq.id)}
-                                            >
-                                                <Trash2 className="mr-2 h-4 w-4" />
-                                                Excluir
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ))}
+                                </CardContent>
+                            </Card>
+                        )
+                    })}
                 </div>
             )}
+
+            {/* Bulk Action Bar (fixed bottom, shown when items selected) */}
+            {isSelectionMode && (
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-card border border-border shadow-xl rounded-xl px-4 py-3">
+                    <span className="text-sm font-medium pr-2 border-r border-border mr-1">
+                        {selectedIds.size} selecionado(s)
+                    </span>
+
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => openBulkDialog('brand')}
+                        disabled={isBulkSaving}
+                    >
+                        <Tag className="mr-1.5 h-3.5 w-3.5" />
+                        Mudar Marca
+                    </Button>
+
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => openBulkDialog('type')}
+                        disabled={isBulkSaving}
+                    >
+                        <Layers className="mr-1.5 h-3.5 w-3.5" />
+                        Mudar Tipo
+                    </Button>
+
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-destructive hover:text-destructive border-destructive/30 hover:bg-destructive/10"
+                        onClick={handleBulkDelete}
+                        disabled={isBulkSaving}
+                    >
+                        {isBulkSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5 mr-1.5" />}
+                        Excluir
+                    </Button>
+
+                    <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={clearSelection}
+                        disabled={isBulkSaving}
+                    >
+                        <X className="h-4 w-4" />
+                    </Button>
+                </div>
+            )}
+
+            {/* Bulk Edit Dialog */}
+            <Dialog open={bulkDialogOpen} onOpenChange={setBulkDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>
+                            {bulkField === 'type' ? 'Mudar Tipo' : 'Mudar Marca'} em Massa
+                        </DialogTitle>
+                        <DialogDescription>
+                            Alterar {bulkField === 'type' ? 'o tipo' : 'a marca'} de {selectedIds.size} equipamento(s) selecionado(s).
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        {bulkField === 'type' ? (
+                            <div className="space-y-2">
+                                <Label>Novo Tipo</Label>
+                                <Select value={bulkValue} onValueChange={setBulkValue}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Selecione o tipo..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="brush_cutter">Roçadeira</SelectItem>
+                                        <SelectItem value="chainsaw">Motosserra</SelectItem>
+                                        <SelectItem value="sprayer">Pulverizador</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        ) : (
+                            <div className="space-y-2">
+                                <Label>Nova Marca</Label>
+                                <Select value={bulkValue} onValueChange={setBulkValue}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Selecione a marca..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {brands.map(b => (
+                                            <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setBulkDialogOpen(false)}>
+                            Cancelar
+                        </Button>
+                        <Button
+                            onClick={handleBulkUpdate}
+                            disabled={!bulkValue || bulkUpdateMutation.isPending}
+                        >
+                            {bulkUpdateMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Aplicar em {selectedIds.size} equipamento(s)
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }
