@@ -51,7 +51,7 @@ const TYPE_COLORS = {
     sprayer: 'bg-blue-500',
 }
 
-const EMPTY_FORM = { type_id: '', brand_id: '', model: '' }
+const EMPTY_FORM = { type_id: '', brand_id: '', model_id: '' }
 
 export default function Equipments() {
     const [search, setSearch] = useState('')
@@ -77,6 +77,13 @@ export default function Equipments() {
         queryKey: ['brands'],
         queryFn: api.brands.list
     })
+
+    const { data: allModels = [] } = useQuery({
+        queryKey: ['models'],
+        queryFn: api.models.list
+    })
+
+    const filteredModels = allModels.filter(m => m.brand_id === formData.brand_id)
 
     const { data: equipmentTypes = [] } = useQuery({
         queryKey: ['equipmentTypes'],
@@ -127,7 +134,7 @@ export default function Equipments() {
         const matchesType = typeFilter === 'all' || typeSlug === typeFilter
         const matchesSearch =
             brandName.toLowerCase().includes(search.toLowerCase()) ||
-            e.model.toLowerCase().includes(search.toLowerCase()) ||
+            e.model?.name?.toLowerCase().includes(search.toLowerCase()) ||
             typeName.toLowerCase().includes(search.toLowerCase())
         return matchesType && matchesSearch
     })
@@ -152,7 +159,7 @@ export default function Equipments() {
 
     const openEditDialog = (eq) => {
         setEditingEquipment(eq)
-        setFormData({ type_id: eq.equipment_type?.id || '', brand_id: eq.brand?.id || '', model: eq.model })
+        setFormData({ type_id: eq.equipment_type?.id || '', brand_id: eq.brand?.id || '', model_id: eq.model_id || '' })
         setDialogOpen(true)
     }
 
@@ -177,7 +184,7 @@ export default function Equipments() {
     }
 
     const isSaving = createMutation.isPending || updateMutation.isPending
-    const isFormValid = formData.type_id && formData.brand_id && formData.model.trim()
+    const isFormValid = formData.type_id && formData.brand_id && formData.model_id
     const isBulkSaving = bulkUpdateMutation.isPending || bulkDeleteMutation.isPending
 
     if (isLoading) return <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>
@@ -217,7 +224,10 @@ export default function Equipments() {
                             </div>
                             <div className="space-y-2">
                                 <Label>Marca *</Label>
-                                <Select value={formData.brand_id} onValueChange={(v) => setFormData(prev => ({ ...prev, brand_id: v }))}>
+                                <Select
+                                    value={formData.brand_id}
+                                    onValueChange={(v) => setFormData(prev => ({ ...prev, brand_id: v, model_id: '' }))}
+                                >
                                     <SelectTrigger><SelectValue placeholder="Selecione a marca..." /></SelectTrigger>
                                     <SelectContent>
                                         {brands.map(b => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
@@ -225,13 +235,19 @@ export default function Equipments() {
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="model">Modelo *</Label>
-                                <Input
-                                    id="model"
-                                    value={formData.model}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, model: e.target.value }))}
-                                    placeholder="Ex: FS 55"
-                                />
+                                <Label>Modelo *</Label>
+                                <Select
+                                    value={formData.model_id}
+                                    onValueChange={(v) => setFormData(prev => ({ ...prev, model_id: v }))}
+                                    disabled={!formData.brand_id}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder={formData.brand_id ? 'Selecione o modelo...' : 'Selecione a marca primeiro'} />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {filteredModels.map(m => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
                             </div>
                         </div>
                         <DialogFooter>
@@ -317,7 +333,7 @@ export default function Equipments() {
                                                 {eq.equipment_type?.name || 'Sem tipo'}
                                             </Badge>
                                             <p className="font-semibold text-sm leading-tight truncate">{eq.brand?.name}</p>
-                                            <p className="text-muted-foreground text-sm truncate">{eq.model}</p>
+                                            <p className="text-muted-foreground text-sm truncate">{eq.model?.name}</p>
                                         </div>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
