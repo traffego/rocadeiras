@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
     ArrowLeft,
@@ -47,6 +47,11 @@ export default function NewOrder() {
     const [uploadedFiles, setUploadedFiles] = useState([])
     const [uploading, setUploading] = useState(false)
     const fileInputRef = useRef(null)
+
+    // Customer combobox state
+    const [customerSearch, setCustomerSearch] = useState('')
+    const [customerDropdownOpen, setCustomerDropdownOpen] = useState(false)
+    const customerComboRef = useRef(null)
 
     const queryClient = useQueryClient()
 
@@ -113,6 +118,24 @@ export default function NewOrder() {
     const updateForm = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }))
     }
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (customerComboRef.current && !customerComboRef.current.contains(e.target)) {
+                setCustomerDropdownOpen(false)
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
+
+    const filteredCustomers = customers.filter(c =>
+        c.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
+        (c.whatsapp || '').includes(customerSearch)
+    )
+
+    const selectedCustomer = customers.find(c => c.id === formData.customer_id)
 
     const handleFileUpload = async (e) => {
         const files = Array.from(e.target.files)
@@ -310,20 +333,54 @@ export default function NewOrder() {
                         </div>
 
                         {!isNewClient ? (
-                            <div className="space-y-2">
+                            <div className="space-y-2" ref={customerComboRef}>
                                 <Label>Selecionar Cliente</Label>
-                                <Select value={formData.customer_id} onValueChange={(v) => updateForm('customer_id', v)}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Escolha um cliente..." />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {customers.map(customer => (
-                                            <SelectItem key={customer.id} value={customer.id}>
-                                                {customer.name} • {customer.whatsapp}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                        placeholder="Buscar por nome ou WhatsApp..."
+                                        value={customerSearch || (selectedCustomer ? selectedCustomer.name : '')}
+                                        onFocus={() => {
+                                            setCustomerSearch('')
+                                            setCustomerDropdownOpen(true)
+                                        }}
+                                        onChange={(e) => {
+                                            setCustomerSearch(e.target.value)
+                                            updateForm('customer_id', '')
+                                            setCustomerDropdownOpen(true)
+                                        }}
+                                        autoComplete="off"
+                                    />
+                                    {customerDropdownOpen && (
+                                        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border border-border rounded-md shadow-lg max-h-56 overflow-y-auto">
+                                            {filteredCustomers.length === 0 ? (
+                                                <div className="px-4 py-3 text-sm text-muted-foreground">
+                                                    Nenhum cliente encontrado.
+                                                </div>
+                                            ) : (
+                                                filteredCustomers.map(customer => (
+                                                    <button
+                                                        key={customer.id}
+                                                        type="button"
+                                                        className={`w-full text-left px-4 py-2.5 text-sm hover:bg-accent transition-colors flex flex-col ${
+                                                            formData.customer_id === customer.id ? 'bg-accent font-medium' : ''
+                                                        }`}
+                                                        onMouseDown={(e) => e.preventDefault()}
+                                                        onClick={() => {
+                                                            updateForm('customer_id', customer.id)
+                                                            setCustomerSearch('')
+                                                            setCustomerDropdownOpen(false)
+                                                        }}
+                                                    >
+                                                        <span>{customer.name}</span>
+                                                        <span className="text-xs text-muted-foreground">{customer.whatsapp}</span>
+                                                    </button>
+                                                ))
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         ) : (
                             <div className="space-y-4">
