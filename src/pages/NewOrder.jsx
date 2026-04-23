@@ -30,7 +30,6 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { toast } from 'sonner'
-import { uploadToR2 } from '@/lib/r2'
 import { SearchableSelect } from '@/components/SearchableSelect'
 
 const steps = [
