@@ -87,7 +87,7 @@ export const api = {
           customer:customers(name),
           technician:technicians(name),
           equipment_type_data:equipment_types(id, name),
-          equipment_model_data:models(id, name, brand:brands(id, name))
+          equipment_model_data:models(id, name)
         `)
                 .order('entry_date', { ascending: false })
             if (error) throw error
@@ -102,7 +102,7 @@ export const api = {
           technician:technicians(*),
           files(*),
           equipment_type_data:equipment_types(id, name),
-          equipment_model_data:models(id, name, brand:brands(id, name))
+          equipment_model_data:models(id, name)
         `)
                 .eq('id', id)
                 .single()
