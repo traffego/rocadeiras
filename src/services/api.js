@@ -412,5 +412,43 @@ export const api = {
                 .eq('id', id)
             if (error) throw error
         }
+    },
+
+    // Models
+    models: {
+        list: async () => {
+            const { data, error } = await supabase
+                .from('models')
+                .select('*, brand:brands(id, name)')
+                .order('name')
+            if (error) throw error
+            return data
+        },
+        create: async (model) => {
+            const { data, error } = await supabase
+                .from('models')
+                .insert(model)
+                .select('*, brand:brands(id, name)')
+                .single()
+            if (error) throw error
+            return data
+        },
+        update: async (id, updates) => {
+            const { data, error } = await supabase
+                .from('models')
+                .update(updates)
+                .eq('id', id)
+                .select('*, brand:brands(id, name)')
+                .single()
+            if (error) throw error
+            return data
+        },
+        delete: async (id) => {
+            const { error } = await supabase
+                .from('models')
+                .delete()
+                .eq('id', id)
+            if (error) throw error
+        }
     }
 }
