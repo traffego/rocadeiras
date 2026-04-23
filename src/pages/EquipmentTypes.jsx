@@ -35,7 +35,7 @@ export default function EquipmentTypes() {
     const [search, setSearch] = useState('')
     const [dialogOpen, setDialogOpen] = useState(false)
     const [editingType, setEditingType] = useState(null)
-    const [formData, setFormData] = useState({ name: '', slug: '' })
+    const [formData, setFormData] = useState({ name: '' })
 
     const queryClient = useQueryClient()
 
@@ -76,19 +76,18 @@ export default function EquipmentTypes() {
     })
 
     const filtered = types.filter(t =>
-        t.name.toLowerCase().includes(search.toLowerCase()) ||
-        t.slug.toLowerCase().includes(search.toLowerCase())
+        t.name.toLowerCase().includes(search.toLowerCase())
     )
 
     const openNewDialog = () => {
         setEditingType(null)
-        setFormData({ name: '', slug: '' })
+        setFormData({ name: '' })
         setDialogOpen(true)
     }
 
     const openEditDialog = (type) => {
         setEditingType(type)
-        setFormData({ name: type.name, slug: type.slug })
+        setFormData({ name: type.name })
         setDialogOpen(true)
     }
 
@@ -107,7 +106,7 @@ export default function EquipmentTypes() {
     }
 
     const isSaving = createMutation.isPending || updateMutation.isPending
-    const isFormValid = formData.name.trim() && formData.slug.trim()
+    const isFormValid = formData.name.trim()
 
     if (isLoading) {
         return <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>
@@ -146,16 +145,7 @@ export default function EquipmentTypes() {
                                     placeholder="Ex: Roçadeira"
                                 />
                             </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="type-slug">Slug *</Label>
-                                <Input
-                                    id="type-slug"
-                                    value={formData.slug}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value.toLowerCase().replace(/\s+/g, '_') }))}
-                                    placeholder="Ex: brush_cutter"
-                                />
-                                <p className="text-xs text-muted-foreground">Identificador interno. Use letras minúsculas e underscores.</p>
-                            </div>
+
                         </div>
                         <DialogFooter>
                             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
@@ -195,7 +185,6 @@ export default function EquipmentTypes() {
                                 <div className="flex items-center justify-between gap-2">
                                     <div className="flex flex-col min-w-0">
                                         <span className="font-semibold text-sm truncate">{type.name}</span>
-                                        <span className="text-xs text-muted-foreground font-mono">{type.slug}</span>
                                     </div>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>

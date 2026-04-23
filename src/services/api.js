@@ -86,7 +86,7 @@ export const api = {
           *,
           customer:customers(name),
           technician:technicians(name),
-          equipment_type_data:equipment_types(id, name, slug),
+          equipment_type_data:equipment_types(id, name),
           equipment_model_data:models(id, name, brand:brands(id, name))
         `)
                 .order('entry_date', { ascending: false })
@@ -101,7 +101,7 @@ export const api = {
           customer:customers(*),
           technician:technicians(*),
           files(*),
-          equipment_type_data:equipment_types(id, name, slug),
+          equipment_type_data:equipment_types(id, name),
           equipment_model_data:models(id, name, brand:brands(id, name))
         `)
                 .eq('id', id)
@@ -295,7 +295,7 @@ export const api = {
         list: async () => {
             const { data, error } = await supabase
                 .from('equipment_models')
-                .select('*, brand:brands!brand_id(id, name), equipment_type:equipment_types!type_id(id, name, slug), model_data:models!model_id(id, name)')
+                .select('*, brand:brands!brand_id(id, name), equipment_type:equipment_types!type_id(id, name), model_data:models!model_id(id, name)')
                 .order('created_at', { ascending: false })
             if (error) throw error
             return data
@@ -304,7 +304,7 @@ export const api = {
             const { data, error } = await supabase
                 .from('equipment_models')
                 .insert(equipment)
-                .select('*, brand:brands!brand_id(id, name), equipment_type:equipment_types!type_id(id, name, slug), model_data:models!model_id(id, name)')
+                .select('*, brand:brands!brand_id(id, name), equipment_type:equipment_types!type_id(id, name), model_data:models!model_id(id, name)')
                 .single()
             if (error) throw error
             return data
@@ -314,7 +314,7 @@ export const api = {
                 .from('equipment_models')
                 .update(updates)
                 .eq('id', id)
-                .select('*, brand:brands!brand_id(id, name), equipment_type:equipment_types!type_id(id, name, slug), model_data:models!model_id(id, name)')
+                .select('*, brand:brands!brand_id(id, name), equipment_type:equipment_types!type_id(id, name), model_data:models!model_id(id, name)')
                 .single()
             if (error) throw error
             return data
@@ -456,4 +456,5 @@ export const api = {
         }
     }
 }
+
 

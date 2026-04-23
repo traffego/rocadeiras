@@ -44,11 +44,11 @@ import {
 } from '@/components/ui/select'
 import { toast } from 'sonner'
 
-// Cores por slug (mantidas no frontend pois não há campo color no DB)
+// Cores por nome do tipo
 const TYPE_COLORS = {
-    brush_cutter: 'bg-green-500',
-    chainsaw: 'bg-orange-500',
-    sprayer: 'bg-blue-500',
+    'Roçadeira': 'bg-green-500',
+    'Motosserra': 'bg-orange-500',
+    'Pulverizador': 'bg-blue-500',
 }
 
 const EMPTY_FORM = { type_id: '', brand_id: '', model_id: '' }
@@ -131,8 +131,7 @@ export default function Equipments() {
     const filtered = equipments.filter(e => {
         const brandName = e.brand?.name || ''
         const typeName = e.equipment_type?.name || ''
-        const typeSlug = e.equipment_type?.slug || ''
-        const matchesType = typeFilter === 'all' || typeSlug === typeFilter
+        const matchesType = typeFilter === 'all' || e.equipment_type?.id === typeFilter
         const matchesSearch =
             brandName.toLowerCase().includes(search.toLowerCase()) ||
             e.model_data?.name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -281,8 +280,8 @@ export default function Equipments() {
                         <Button
                             key={t.id}
                             size="sm"
-                            variant={typeFilter === t.slug ? 'default' : 'outline'}
-                            onClick={() => setTypeFilter(t.slug)}
+                            variant={typeFilter === t.id ? 'default' : 'outline'}
+                            onClick={() => setTypeFilter(t.id)}
                         >
                             {t.name}
                         </Button>
@@ -314,7 +313,7 @@ export default function Equipments() {
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {filtered.map((eq) => {
                         const isSelected = selectedIds.has(eq.id)
-                        const slug = eq.equipment_type?.slug || ''
+                        const typeName = eq.equipment_type?.name || ''
                         return (
                             <Card
                                 key={eq.id}
@@ -330,7 +329,7 @@ export default function Equipments() {
                                             }
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <Badge className={`${TYPE_COLORS[slug] || 'bg-gray-500'} text-white text-xs mb-2`}>
+                                            <Badge className={`${TYPE_COLORS[typeName] || 'bg-gray-500'} text-white text-xs mb-2`}>
                                                 {eq.equipment_type?.name || 'Sem tipo'}
                                             </Badge>
                                             <p className="font-semibold text-sm leading-tight truncate">{eq.brand?.name}</p>
