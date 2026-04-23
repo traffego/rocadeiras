@@ -291,7 +291,7 @@ export const api = {
         list: async () => {
             const { data, error } = await supabase
                 .from('equipment_models')
-                .select('*, brand:brands(id, name)')
+                .select('*, brand:brands(id, name), equipment_type:equipment_types(id, name, slug)')
                 .order('model')
             if (error) throw error
             return data
@@ -300,7 +300,7 @@ export const api = {
             const { data, error } = await supabase
                 .from('equipment_models')
                 .insert(equipment)
-                .select('*, brand:brands(id, name)')
+                .select('*, brand:brands(id, name), equipment_type:equipment_types(id, name, slug)')
                 .single()
             if (error) throw error
             return data
@@ -310,7 +310,7 @@ export const api = {
                 .from('equipment_models')
                 .update(updates)
                 .eq('id', id)
-                .select('*, brand:brands(id, name)')
+                .select('*, brand:brands(id, name), equipment_type:equipment_types(id, name, slug)')
                 .single()
             if (error) throw error
             return data
@@ -334,6 +334,44 @@ export const api = {
                 .from('equipment_models')
                 .delete()
                 .in('id', ids)
+            if (error) throw error
+        }
+    },
+
+    // Equipment Types
+    equipmentTypes: {
+        list: async () => {
+            const { data, error } = await supabase
+                .from('equipment_types')
+                .select('*')
+                .order('name')
+            if (error) throw error
+            return data
+        },
+        create: async (type) => {
+            const { data, error } = await supabase
+                .from('equipment_types')
+                .insert(type)
+                .select()
+                .single()
+            if (error) throw error
+            return data
+        },
+        update: async (id, updates) => {
+            const { data, error } = await supabase
+                .from('equipment_types')
+                .update(updates)
+                .eq('id', id)
+                .select()
+                .single()
+            if (error) throw error
+            return data
+        },
+        delete: async (id) => {
+            const { error } = await supabase
+                .from('equipment_types')
+                .delete()
+                .eq('id', id)
             if (error) throw error
         }
     },

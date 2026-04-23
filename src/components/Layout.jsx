@@ -12,7 +12,8 @@ import {
     Moon,
     Palette,
     Cpu,
-    Tag
+    Tag,
+    Layers
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useState } from 'react'
@@ -33,6 +34,7 @@ const navigation = [
     { name: 'Peças', href: '/inventory', icon: Package },
     { name: 'Equipamentos', href: '/equipments', icon: Cpu },
     { name: 'Marcas', href: '/brands', icon: Tag },
+    { name: 'Tipos', href: '/equipment-types', icon: Layers },
     { name: 'Clientes', href: '/customers', icon: Users },
     { name: 'Técnicos', href: '/technicians', icon: Wrench },
 ]

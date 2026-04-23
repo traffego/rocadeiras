@@ -44,19 +44,14 @@ import {
 } from '@/components/ui/select'
 import { toast } from 'sonner'
 
-const TYPE_LABELS = {
-    brush_cutter: 'Roçadeira',
-    chainsaw: 'Motosserra',
-    sprayer: 'Pulverizador',
-}
-
+// Cores por slug (mantidas no frontend pois não há campo color no DB)
 const TYPE_COLORS = {
     brush_cutter: 'bg-green-500',
     chainsaw: 'bg-orange-500',
     sprayer: 'bg-blue-500',
 }
 
-const EMPTY_FORM = { type: '', brand_id: '', model: '' }
+const EMPTY_FORM = { type_id: '', brand_id: '', model: '' }
 
 export default function Equipments() {
     const [search, setSearch] = useState('')
@@ -65,10 +60,10 @@ export default function Equipments() {
     const [editingEquipment, setEditingEquipment] = useState(null)
     const [formData, setFormData] = useState(EMPTY_FORM)
 
-    // Bulk selection state
+    // Bulk selection
     const [selectedIds, setSelectedIds] = useState(new Set())
     const [bulkDialogOpen, setBulkDialogOpen] = useState(false)
-    const [bulkField, setBulkField] = useState(null) // 'type' | 'brand'
+    const [bulkField, setBulkField] = useState(null)
     const [bulkValue, setBulkValue] = useState('')
 
     const queryClient = useQueryClient()
@@ -83,33 +78,27 @@ export default function Equipments() {
         queryFn: api.brands.list
     })
 
+    const { data: equipmentTypes = [] } = useQuery({
+        queryKey: ['equipmentTypes'],
+        queryFn: api.equipmentTypes.list
+    })
+
     const createMutation = useMutation({
         mutationFn: api.equipments.create,
-        onSuccess: () => {
-            queryClient.invalidateQueries(['equipments'])
-            setDialogOpen(false)
-            toast.success('Equipamento cadastrado com sucesso!')
-        },
-        onError: (e) => toast.error('Erro ao cadastrar: ' + e.message)
+        onSuccess: () => { queryClient.invalidateQueries(['equipments']); setDialogOpen(false); toast.success('Equipamento cadastrado!') },
+        onError: (e) => toast.error('Erro: ' + e.message)
     })
 
     const updateMutation = useMutation({
         mutationFn: ({ id, data }) => api.equipments.update(id, data),
-        onSuccess: () => {
-            queryClient.invalidateQueries(['equipments'])
-            setDialogOpen(false)
-            toast.success('Equipamento atualizado!')
-        },
-        onError: (e) => toast.error('Erro ao atualizar: ' + e.message)
+        onSuccess: () => { queryClient.invalidateQueries(['equipments']); setDialogOpen(false); toast.success('Equipamento atualizado!') },
+        onError: (e) => toast.error('Erro: ' + e.message)
     })
 
     const deleteMutation = useMutation({
         mutationFn: api.equipments.delete,
-        onSuccess: () => {
-            queryClient.invalidateQueries(['equipments'])
-            toast.success('Equipamento removido!')
-        },
-        onError: (e) => toast.error('Erro ao remover: ' + e.message)
+        onSuccess: () => { queryClient.invalidateQueries(['equipments']); toast.success('Equipamento removido!') },
+        onError: (e) => toast.error('Erro: ' + e.message)
     })
 
     const bulkUpdateMutation = useMutation({
@@ -118,33 +107,31 @@ export default function Equipments() {
             queryClient.invalidateQueries(['equipments'])
             setBulkDialogOpen(false)
             setBulkValue('')
+            const count = selectedIds.size
             setSelectedIds(new Set())
-            toast.success(`${selectedIds.size} equipamento(s) atualizado(s)!`)
+            toast.success(`${count} equipamento(s) atualizado(s)!`)
         },
-        onError: (e) => toast.error('Erro ao atualizar: ' + e.message)
+        onError: (e) => toast.error('Erro: ' + e.message)
     })
 
     const bulkDeleteMutation = useMutation({
         mutationFn: (ids) => api.equipments.bulkDelete(ids),
-        onSuccess: () => {
-            queryClient.invalidateQueries(['equipments'])
-            setSelectedIds(new Set())
-            toast.success('Equipamentos removidos!')
-        },
-        onError: (e) => toast.error('Erro ao remover: ' + e.message)
+        onSuccess: () => { queryClient.invalidateQueries(['equipments']); setSelectedIds(new Set()); toast.success('Equipamentos removidos!') },
+        onError: (e) => toast.error('Erro: ' + e.message)
     })
 
     const filtered = equipments.filter(e => {
         const brandName = e.brand?.name || ''
-        const matchesType = typeFilter === 'all' || e.type === typeFilter
+        const typeName = e.equipment_type?.name || ''
+        const typeSlug = e.equipment_type?.slug || ''
+        const matchesType = typeFilter === 'all' || typeSlug === typeFilter
         const matchesSearch =
             brandName.toLowerCase().includes(search.toLowerCase()) ||
             e.model.toLowerCase().includes(search.toLowerCase()) ||
-            (TYPE_LABELS[e.type] || '').toLowerCase().includes(search.toLowerCase())
+            typeName.toLowerCase().includes(search.toLowerCase())
         return matchesType && matchesSearch
     })
 
-    // Selection helpers
     const isSelectionMode = selectedIds.size > 0
     const allFilteredSelected = filtered.length > 0 && filtered.every(e => selectedIds.has(e.id))
 
@@ -157,70 +144,43 @@ export default function Equipments() {
     }
 
     const toggleSelectAll = () => {
-        if (allFilteredSelected) {
-            setSelectedIds(new Set())
-        } else {
-            setSelectedIds(new Set(filtered.map(e => e.id)))
-        }
+        if (allFilteredSelected) setSelectedIds(new Set())
+        else setSelectedIds(new Set(filtered.map(e => e.id)))
     }
 
-    const clearSelection = () => setSelectedIds(new Set())
-
-    // Single item actions
-    const openNewDialog = () => {
-        setEditingEquipment(null)
-        setFormData(EMPTY_FORM)
-        setDialogOpen(true)
-    }
+    const openNewDialog = () => { setEditingEquipment(null); setFormData(EMPTY_FORM); setDialogOpen(true) }
 
     const openEditDialog = (eq) => {
         setEditingEquipment(eq)
-        setFormData({ type: eq.type, brand_id: eq.brand?.id || '', model: eq.model })
+        setFormData({ type_id: eq.equipment_type?.id || '', brand_id: eq.brand?.id || '', model: eq.model })
         setDialogOpen(true)
     }
 
     const handleSubmit = () => {
-        if (editingEquipment) {
-            updateMutation.mutate({ id: editingEquipment.id, data: formData })
-        } else {
-            createMutation.mutate(formData)
-        }
+        if (editingEquipment) updateMutation.mutate({ id: editingEquipment.id, data: formData })
+        else createMutation.mutate(formData)
     }
 
     const handleDelete = (id) => {
-        if (confirm('Tem certeza que deseja excluir este equipamento?')) {
-            deleteMutation.mutate(id)
-        }
+        if (confirm('Excluir este equipamento?')) deleteMutation.mutate(id)
     }
 
-    // Bulk actions
-    const openBulkDialog = (field) => {
-        setBulkField(field)
-        setBulkValue('')
-        setBulkDialogOpen(true)
-    }
+    const openBulkDialog = (field) => { setBulkField(field); setBulkValue(''); setBulkDialogOpen(true) }
 
     const handleBulkUpdate = () => {
-        const updates = bulkField === 'type'
-            ? { type: bulkValue }
-            : { brand_id: bulkValue }
+        const updates = bulkField === 'type' ? { type_id: bulkValue } : { brand_id: bulkValue }
         bulkUpdateMutation.mutate({ ids: [...selectedIds], updates })
     }
 
     const handleBulkDelete = () => {
-        const count = selectedIds.size
-        if (confirm(`Tem certeza que deseja excluir ${count} equipamento(s)?`)) {
-            bulkDeleteMutation.mutate([...selectedIds])
-        }
+        if (confirm(`Excluir ${selectedIds.size} equipamento(s)?`)) bulkDeleteMutation.mutate([...selectedIds])
     }
 
     const isSaving = createMutation.isPending || updateMutation.isPending
-    const isFormValid = formData.type && formData.brand_id && formData.model.trim()
+    const isFormValid = formData.type_id && formData.brand_id && formData.model.trim()
     const isBulkSaving = bulkUpdateMutation.isPending || bulkDeleteMutation.isPending
 
-    if (isLoading) {
-        return <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>
-    }
+    if (isLoading) return <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>
 
     return (
         <div className="space-y-6 pb-24">
@@ -228,9 +188,7 @@ export default function Equipments() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold">Equipamentos</h1>
-                    <p className="text-muted-foreground">
-                        {equipments.length} modelos cadastrados
-                    </p>
+                    <p className="text-muted-foreground">{equipments.length} modelos cadastrados</p>
                 </div>
 
                 <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -242,39 +200,27 @@ export default function Equipments() {
                     </DialogTrigger>
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>
-                                {editingEquipment ? 'Editar Equipamento' : 'Novo Equipamento'}
-                            </DialogTitle>
+                            <DialogTitle>{editingEquipment ? 'Editar Equipamento' : 'Novo Equipamento'}</DialogTitle>
                             <DialogDescription>
-                                {editingEquipment
-                                    ? 'Atualize os dados do equipamento'
-                                    : 'Preencha os dados para cadastrar um novo modelo'}
+                                {editingEquipment ? 'Atualize os dados do equipamento' : 'Preencha os dados para cadastrar um novo modelo'}
                             </DialogDescription>
                         </DialogHeader>
                         <div className="space-y-4 py-4">
                             <div className="space-y-2">
                                 <Label>Tipo *</Label>
-                                <Select value={formData.type} onValueChange={(v) => setFormData(prev => ({ ...prev, type: v }))}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Selecione o tipo..." />
-                                    </SelectTrigger>
+                                <Select value={formData.type_id} onValueChange={(v) => setFormData(prev => ({ ...prev, type_id: v }))}>
+                                    <SelectTrigger><SelectValue placeholder="Selecione o tipo..." /></SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="brush_cutter">Roçadeira</SelectItem>
-                                        <SelectItem value="chainsaw">Motosserra</SelectItem>
-                                        <SelectItem value="sprayer">Pulverizador</SelectItem>
+                                        {equipmentTypes.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
                             </div>
                             <div className="space-y-2">
                                 <Label>Marca *</Label>
                                 <Select value={formData.brand_id} onValueChange={(v) => setFormData(prev => ({ ...prev, brand_id: v }))}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Selecione a marca..." />
-                                    </SelectTrigger>
+                                    <SelectTrigger><SelectValue placeholder="Selecione a marca..." /></SelectTrigger>
                                     <SelectContent>
-                                        {brands.map(b => (
-                                            <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
-                                        ))}
+                                        {brands.map(b => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -289,9 +235,7 @@ export default function Equipments() {
                             </div>
                         </div>
                         <DialogFooter>
-                            <Button variant="outline" onClick={() => setDialogOpen(false)}>
-                                Cancelar
-                            </Button>
+                            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
                             <Button onClick={handleSubmit} disabled={!isFormValid || isSaving}>
                                 {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                 {editingEquipment ? 'Salvar' : 'Cadastrar'}
@@ -313,38 +257,35 @@ export default function Equipments() {
                     />
                 </div>
                 <div className="flex gap-2 flex-wrap">
-                    {['all', 'brush_cutter', 'chainsaw', 'sprayer'].map(type => (
+                    <Button size="sm" variant={typeFilter === 'all' ? 'default' : 'outline'} onClick={() => setTypeFilter('all')}>
+                        Todos
+                    </Button>
+                    {equipmentTypes.map(t => (
                         <Button
-                            key={type}
+                            key={t.id}
                             size="sm"
-                            variant={typeFilter === type ? 'default' : 'outline'}
-                            onClick={() => setTypeFilter(type)}
+                            variant={typeFilter === t.slug ? 'default' : 'outline'}
+                            onClick={() => setTypeFilter(t.slug)}
                         >
-                            {type === 'all' ? 'Todos' : TYPE_LABELS[type]}
+                            {t.name}
                         </Button>
                     ))}
                 </div>
             </div>
 
-            {/* Select-all bar (shown when any selected) */}
+            {/* Select-all bar */}
             {isSelectionMode && (
                 <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                    <button
-                        onClick={toggleSelectAll}
-                        className="flex items-center gap-1.5 hover:text-foreground transition-colors"
-                    >
-                        {allFilteredSelected
-                            ? <CheckSquare className="h-4 w-4 text-primary" />
-                            : <Square className="h-4 w-4" />
-                        }
+                    <button onClick={toggleSelectAll} className="flex items-center gap-1.5 hover:text-foreground transition-colors">
+                        {allFilteredSelected ? <CheckSquare className="h-4 w-4 text-primary" /> : <Square className="h-4 w-4" />}
                         {allFilteredSelected ? 'Desmarcar todos' : 'Selecionar todos'}
                     </button>
-                    <span className="text-muted-foreground">•</span>
+                    <span>•</span>
                     <span>{selectedIds.size} selecionado(s)</span>
                 </div>
             )}
 
-            {/* Cards Grid */}
+            {/* Cards */}
             {filtered.length === 0 ? (
                 <Card>
                     <CardContent className="py-12 text-center text-muted-foreground">
@@ -356,36 +297,28 @@ export default function Equipments() {
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {filtered.map((eq) => {
                         const isSelected = selectedIds.has(eq.id)
+                        const slug = eq.equipment_type?.slug || ''
                         return (
                             <Card
                                 key={eq.id}
                                 onClick={() => toggleSelect(eq.id)}
-                                className={`group cursor-pointer transition-all ${
-                                    isSelected
-                                        ? 'ring-2 ring-primary shadow-md'
-                                        : 'hover:shadow-md'
-                                }`}
+                                className={`group cursor-pointer transition-all ${isSelected ? 'ring-2 ring-primary shadow-md' : 'hover:shadow-md'}`}
                             >
                                 <CardContent className="p-4">
                                     <div className="flex items-start justify-between gap-2">
-                                        {/* Checkbox */}
                                         <div className="flex-shrink-0 mt-0.5">
                                             {isSelected
                                                 ? <CheckSquare className="h-4 w-4 text-primary" />
                                                 : <Square className={`h-4 w-4 text-muted-foreground ${isSelectionMode ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`} />
                                             }
                                         </div>
-
-                                        {/* Info */}
                                         <div className="flex-1 min-w-0">
-                                            <Badge className={`${TYPE_COLORS[eq.type]} text-white text-xs mb-2`}>
-                                                {TYPE_LABELS[eq.type]}
+                                            <Badge className={`${TYPE_COLORS[slug] || 'bg-gray-500'} text-white text-xs mb-2`}>
+                                                {eq.equipment_type?.name || 'Sem tipo'}
                                             </Badge>
                                             <p className="font-semibold text-sm leading-tight truncate">{eq.brand?.name}</p>
                                             <p className="text-muted-foreground text-sm truncate">{eq.model}</p>
                                         </div>
-
-                                        {/* Actions (individual) — stop propagation so click doesn't toggle selection */}
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
                                                 <Button
@@ -399,15 +332,10 @@ export default function Equipments() {
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
                                                 <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openEditDialog(eq) }}>
-                                                    <Pencil className="mr-2 h-4 w-4" />
-                                                    Editar
+                                                    <Pencil className="mr-2 h-4 w-4" />Editar
                                                 </DropdownMenuItem>
-                                                <DropdownMenuItem
-                                                    className="text-destructive"
-                                                    onClick={(e) => { e.stopPropagation(); handleDelete(eq.id) }}
-                                                >
-                                                    <Trash2 className="mr-2 h-4 w-4" />
-                                                    Excluir
+                                                <DropdownMenuItem className="text-destructive" onClick={(e) => { e.stopPropagation(); handleDelete(eq.id) }}>
+                                                    <Trash2 className="mr-2 h-4 w-4" />Excluir
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
@@ -419,50 +347,21 @@ export default function Equipments() {
                 </div>
             )}
 
-            {/* Bulk Action Bar (fixed bottom, shown when items selected) */}
+            {/* Bulk Action Bar */}
             {isSelectionMode && (
                 <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-card border border-border shadow-xl rounded-xl px-4 py-3">
-                    <span className="text-sm font-medium pr-2 border-r border-border mr-1">
-                        {selectedIds.size} selecionado(s)
-                    </span>
-
-                    <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => openBulkDialog('brand')}
-                        disabled={isBulkSaving}
-                    >
-                        <Tag className="mr-1.5 h-3.5 w-3.5" />
-                        Mudar Marca
+                    <span className="text-sm font-medium pr-2 border-r border-border mr-1">{selectedIds.size} selecionado(s)</span>
+                    <Button size="sm" variant="outline" onClick={() => openBulkDialog('brand')} disabled={isBulkSaving}>
+                        <Tag className="mr-1.5 h-3.5 w-3.5" />Mudar Marca
                     </Button>
-
-                    <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => openBulkDialog('type')}
-                        disabled={isBulkSaving}
-                    >
-                        <Layers className="mr-1.5 h-3.5 w-3.5" />
-                        Mudar Tipo
+                    <Button size="sm" variant="outline" onClick={() => openBulkDialog('type')} disabled={isBulkSaving}>
+                        <Layers className="mr-1.5 h-3.5 w-3.5" />Mudar Tipo
                     </Button>
-
-                    <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-destructive hover:text-destructive border-destructive/30 hover:bg-destructive/10"
-                        onClick={handleBulkDelete}
-                        disabled={isBulkSaving}
-                    >
+                    <Button size="sm" variant="outline" className="text-destructive hover:text-destructive border-destructive/30 hover:bg-destructive/10" onClick={handleBulkDelete} disabled={isBulkSaving}>
                         {isBulkSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5 mr-1.5" />}
                         Excluir
                     </Button>
-
-                    <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={clearSelection}
-                        disabled={isBulkSaving}
-                    >
+                    <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())} disabled={isBulkSaving}>
                         <X className="h-4 w-4" />
                     </Button>
                 </div>
@@ -472,11 +371,9 @@ export default function Equipments() {
             <Dialog open={bulkDialogOpen} onOpenChange={setBulkDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>
-                            {bulkField === 'type' ? 'Mudar Tipo' : 'Mudar Marca'} em Massa
-                        </DialogTitle>
+                        <DialogTitle>{bulkField === 'type' ? 'Mudar Tipo' : 'Mudar Marca'} em Massa</DialogTitle>
                         <DialogDescription>
-                            Alterar {bulkField === 'type' ? 'o tipo' : 'a marca'} de {selectedIds.size} equipamento(s) selecionado(s).
+                            Alterar {bulkField === 'type' ? 'o tipo' : 'a marca'} de {selectedIds.size} equipamento(s).
                         </DialogDescription>
                     </DialogHeader>
                     <div className="py-4">
@@ -484,13 +381,9 @@ export default function Equipments() {
                             <div className="space-y-2">
                                 <Label>Novo Tipo</Label>
                                 <Select value={bulkValue} onValueChange={setBulkValue}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Selecione o tipo..." />
-                                    </SelectTrigger>
+                                    <SelectTrigger><SelectValue placeholder="Selecione o tipo..." /></SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="brush_cutter">Roçadeira</SelectItem>
-                                        <SelectItem value="chainsaw">Motosserra</SelectItem>
-                                        <SelectItem value="sprayer">Pulverizador</SelectItem>
+                                        {equipmentTypes.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -498,26 +391,17 @@ export default function Equipments() {
                             <div className="space-y-2">
                                 <Label>Nova Marca</Label>
                                 <Select value={bulkValue} onValueChange={setBulkValue}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Selecione a marca..." />
-                                    </SelectTrigger>
+                                    <SelectTrigger><SelectValue placeholder="Selecione a marca..." /></SelectTrigger>
                                     <SelectContent>
-                                        {brands.map(b => (
-                                            <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
-                                        ))}
+                                        {brands.map(b => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
                             </div>
                         )}
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setBulkDialogOpen(false)}>
-                            Cancelar
-                        </Button>
-                        <Button
-                            onClick={handleBulkUpdate}
-                            disabled={!bulkValue || bulkUpdateMutation.isPending}
-                        >
+                        <Button variant="outline" onClick={() => setBulkDialogOpen(false)}>Cancelar</Button>
+                        <Button onClick={handleBulkUpdate} disabled={!bulkValue || bulkUpdateMutation.isPending}>
                             {bulkUpdateMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Aplicar em {selectedIds.size} equipamento(s)
                         </Button>

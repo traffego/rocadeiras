@@ -17,6 +17,7 @@ import Orders from './pages/Orders'
 import Inventory from './pages/Inventory'
 import Equipments from './pages/Equipments'
 import Brands from './pages/Brands'
+import EquipmentTypes from './pages/EquipmentTypes'
 
 function App() {
   return (
@@ -39,6 +40,7 @@ function App() {
             <Route path="inventory" element={<Inventory />} />
             <Route path="equipments" element={<Equipments />} />
             <Route path="brands" element={<Brands />} />
+            <Route path="equipment-types" element={<EquipmentTypes />} />
             <Route path="customers" element={<Customers />} />
             <Route path="technicians" element={<Technicians />} />
             <Route path="os/:id" element={<OrderDetail />} />
