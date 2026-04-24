@@ -100,7 +100,7 @@ export default function EquipmentTypes() {
     }
 
     const handleDelete = (id) => {
-        if (confirm('Tem certeza que deseja excluir este tipo?')) {
+        if (confirm('Excluir este tipo? As combinações de equipamentos vinculadas também serão removidas.')) {
             deleteMutation.mutate(id)
         }
     }

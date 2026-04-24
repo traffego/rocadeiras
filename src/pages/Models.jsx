@@ -98,7 +98,7 @@ export default function Models() {
     }
 
     const handleDelete = (id) => {
-        if (confirm('Excluir este modelo?')) deleteMutation.mutate(id)
+        if (confirm('Excluir este modelo? As combinações de equipamentos vinculadas também serão removidas.')) deleteMutation.mutate(id)
     }
 
     const isSaving = createMutation.isPending || updateMutation.isPending

@@ -100,7 +100,7 @@ export default function Brands() {
     }
 
     const handleDelete = (id) => {
-        if (confirm('Tem certeza que deseja excluir esta marca? Equipamentos vinculados perderão a referência.')) {
+        if (confirm('Excluir esta marca? As combinações de equipamentos vinculadas também serão removidas.')) {
             deleteMutation.mutate(id)
         }
     }

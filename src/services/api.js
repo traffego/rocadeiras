@@ -380,6 +380,12 @@ export const api = {
             return data
         },
         delete: async (id) => {
+            // Cascade: remove combinations using this type
+            const { error: combErr } = await supabase
+                .from('equipment_models')
+                .delete()
+                .eq('type_id', id)
+            if (combErr) throw combErr
             const { error } = await supabase
                 .from('equipment_types')
                 .delete()
@@ -418,6 +424,12 @@ export const api = {
             return data
         },
         delete: async (id) => {
+            // Cascade: remove combinations using this brand
+            const { error: combErr } = await supabase
+                .from('equipment_models')
+                .delete()
+                .eq('brand_id', id)
+            if (combErr) throw combErr
             const { error } = await supabase
                 .from('brands')
                 .delete()
@@ -456,6 +468,12 @@ export const api = {
             return data
         },
         delete: async (id) => {
+            // Cascade: remove combinations using this model
+            const { error: combErr } = await supabase
+                .from('equipment_models')
+                .delete()
+                .eq('model_id', id)
+            if (combErr) throw combErr
             const { error } = await supabase
                 .from('models')
                 .delete()
