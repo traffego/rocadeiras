@@ -264,9 +264,7 @@ export default function NewOrder() {
                         url: file.url,
                         step: 'received',
                         type: file.type,
-                        caption: 'Foto de Entrada',
-                        storage_path: file.storage_path,
-                        storage_provider: file.storage_provider
+                        caption: 'Foto de Entrada'
                     })
                 ))
             }

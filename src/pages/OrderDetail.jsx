@@ -95,9 +95,6 @@ export default function OrderDetail() {
 
     const deleteFileMutation = useMutation({
         mutationFn: async (file) => {
-            if (file.storage_path) {
-                await storage.delete(file.storage_path, file.storage_provider)
-            }
             const { error } = await supabase.from('files').delete().eq('id', file.id)
             if (error) throw error
         },
@@ -146,9 +143,7 @@ export default function OrderDetail() {
                 url: result.url,
                 step: order.current_status,
                 type: file.type.startsWith('video') ? 'video' : 'photo',
-                caption: `Upload ${statusConfig[order.current_status].label}`,
-                storage_path: result.path,
-                storage_provider: result.provider
+                caption: `Upload ${statusConfig[order.current_status].label}`
             })
         } catch (error) {
             console.error('Erro upload', error)
