@@ -12,7 +12,10 @@ import {
     DollarSign,
     Loader2,
     Wrench,
-    XCircle
+    XCircle,
+    X,
+    Play,
+    Youtube
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/services/api'
@@ -51,6 +54,8 @@ export default function OrderDetail() {
     const { id } = useParams()
     const navigate = useNavigate()
     const fileInputRef = useRef(null)
+    const cameraInputRef = useRef(null)
+    const [lightbox, setLightbox] = useState(null) // { url, type }
 
 
     const [loadingUpload, setLoadingUpload] = useState(false)
@@ -262,23 +267,82 @@ export default function OrderDetail() {
                         }}
                     />
 
-                    {/* Observations Input */}
+                    {/* Fotos e Vídeos — galeria principal */}
                     <Card>
-                        <CardHeader>
-                            <CardTitle>Observações da Etapa</CardTitle>
+                        <CardHeader className="flex flex-row items-center justify-between pb-3">
+                            <CardTitle className="text-base flex items-center gap-2">
+                                <Camera className="h-4 w-4" />
+                                Fotos e Vídeos
+                                {order.files?.length > 0 && (
+                                    <span className="text-xs font-normal text-muted-foreground">({order.files.length})</span>
+                                )}
+                            </CardTitle>
+                            <div className="flex gap-1.5">
+                                <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={handleYouTubeLink}>
+                                    <Youtube className="h-3.5 w-3.5" /> YouTube
+                                </Button>
+                                <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={() => cameraInputRef.current?.click()} disabled={loadingUpload}>
+                                    <Camera className="h-3.5 w-3.5" /> Câmera
+                                </Button>
+                                <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={() => fileInputRef.current?.click()} disabled={loadingUpload}>
+                                    {loadingUpload ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />} Galeria
+                                </Button>
+                                {/* Input câmera */}
+                                <input type="file" ref={cameraInputRef} className="hidden" accept="image/*,video/*" capture="environment" onChange={handleFileUpload} />
+                                {/* Input galeria */}
+                                <input type="file" ref={fileInputRef} className="hidden" accept="image/*,video/*" multiple onChange={handleFileUpload} />
+                            </div>
                         </CardHeader>
                         <CardContent>
-                            <div className="flex gap-2">
-                                <Textarea
-                                    placeholder="Adicione observações sobre o serviço... (Funcionalidade futura)"
-                                    value={obs}
-                                    onChange={(e) => setObs(e.target.value)}
-                                />
-                            </div>
+                            {!order.files || order.files.length === 0 ? (
+                                <div className="text-center py-8 text-muted-foreground">
+                                    <Camera className="h-10 w-10 mx-auto mb-2 opacity-20" />
+                                    <p className="text-sm">Nenhuma mídia anexada</p>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                                    {order.files.map(file => (
+                                        <div
+                                            key={file.id}
+                                            className="group relative rounded-lg overflow-hidden border bg-muted cursor-pointer"
+                                            style={{ aspectRatio: '1' }}
+                                            onClick={() => setLightbox(file)}
+                                        >
+                                            {/* Thumbnail */}
+                                            {file.storage_provider === 'youtube' ? (
+                                                <div className="w-full h-full bg-slate-900 flex flex-col items-center justify-center gap-1">
+                                                    <Youtube className="h-6 w-6 text-red-400" />
+                                                    <span className="text-[10px] text-slate-400">YouTube</span>
+                                                </div>
+                                            ) : file.type === 'video' ? (
+                                                <div className="w-full h-full bg-slate-800 flex flex-col items-center justify-center gap-1">
+                                                    <Play className="h-7 w-7 text-white/70" fill="currentColor" />
+                                                    <span className="text-[10px] text-slate-400">Vídeo</span>
+                                                </div>
+                                            ) : (
+                                                <img src={file.url} alt={file.caption || ''} className="object-cover w-full h-full" />
+                                            )}
+
+                                            {/* Caption */}
+                                            {file.caption && (
+                                                <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[9px] px-1.5 py-0.5 truncate opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    {file.caption}
+                                                </div>
+                                            )}
+
+                                            {/* Delete */}
+                                            <button
+                                                onClick={e => { e.stopPropagation(); if (confirm('Remover este arquivo?')) deleteFileMutation.mutate(file) }}
+                                                className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            >
+                                                <X className="h-3.5 w-3.5" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
-
-                </div>
 
                 {/* Sidebar Info */}
                 <div className="space-y-6">
@@ -369,64 +433,53 @@ export default function OrderDetail() {
                         </CardContent>
                     </Card>
 
-                    {/* Fotos */}
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <CardTitle className="text-base text-indigo-700 flex items-center gap-2">
-                                <Camera className="h-4 w-4" />
-                                Fotos e Vídeos
-                            </CardTitle>
-                            <div className="flex gap-1">
-                                <Button size="sm" variant="outline" className="border-indigo-200 text-indigo-700 h-8 w-8 p-0" onClick={handleYouTubeLink}>
-                                    <FileText className="h-4 w-4" />
-                                </Button>
-                                <Button size="sm" variant="outline" className="border-indigo-200 text-indigo-700 h-8 w-8 p-0" onClick={() => fileInputRef.current?.click()} disabled={loadingUpload}>
-                                    {loadingUpload ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                                </Button>
-                            </div>
-                            <input
-                                type="file"
-                                ref={fileInputRef}
-                                className="hidden"
-                                accept="image/*,video/*"
-                                onChange={handleFileUpload}
-                            />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="grid grid-cols-2 gap-2">
-                                {order.files?.map(file => (
-                                    <div key={file.id} className="relative aspect-square rounded-md overflow-hidden border group">
-                                        {file.storage_provider === 'youtube' ? (
-                                            <div className="w-full h-full bg-slate-900 flex items-center justify-center">
-                                                <FileText className="h-8 w-8 text-white opacity-50" />
-                                            </div>
-                                        ) : (
-                                            <img src={file.url} alt={file.caption} className="object-cover w-full h-full" />
-                                        )}
-                                        <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <Button
-                                                variant="destructive"
-                                                size="icon"
-                                                className="h-6 w-6 rounded-full shadow-lg"
-                                                onClick={(e) => {
-                                                    e.stopPropagation()
-                                                    if (confirm("Remover este arquivo?")) deleteFileMutation.mutate(file)
-                                                }}
-                                            >
-                                                <XCircle className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                        <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] p-1 truncate">
-                                            {file.caption}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </CardContent>
-                    </Card>
+                    {/* Fotos - sidebar (removido - galeria movida para main) */}
 
                 </div>
             </div>
-        </div >
+
+            {/* Lightbox */}
+            {lightbox && (
+                <div
+                    className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+                    onClick={() => setLightbox(null)}
+                >
+                    <button
+                        onClick={() => setLightbox(null)}
+                        className="absolute top-4 right-4 text-white/70 hover:text-white"
+                    >
+                        <X className="h-8 w-8" />
+                    </button>
+                    <div className="max-w-4xl max-h-[90vh] w-full" onClick={e => e.stopPropagation()}>
+                        {lightbox.storage_provider === 'youtube' ? (
+                            <div className="aspect-video w-full">
+                                <iframe
+                                    src={lightbox.url.replace('watch?v=', 'embed/')}
+                                    className="w-full h-full rounded-lg"
+                                    allow="autoplay; fullscreen"
+                                    allowFullScreen
+                                />
+                            </div>
+                        ) : lightbox.type === 'video' ? (
+                            <video
+                                src={lightbox.url}
+                                controls
+                                autoPlay
+                                className="max-h-[80vh] max-w-full mx-auto rounded-lg"
+                            />
+                        ) : (
+                            <img
+                                src={lightbox.url}
+                                alt={lightbox.caption || ''}
+                                className="max-h-[85vh] max-w-full mx-auto rounded-lg object-contain"
+                            />
+                        )}
+                        {lightbox.caption && (
+                            <p className="text-center text-white/60 text-sm mt-3">{lightbox.caption}</p>
+                        )}
+                    </div>
+                </div>
+            )}
+        </div>
     )
 }
