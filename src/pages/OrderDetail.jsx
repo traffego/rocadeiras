@@ -344,6 +344,8 @@ export default function OrderDetail() {
                         </CardContent>
                     </Card>
 
+                </div>{/* end md:col-span-2 */}
+
                 {/* Sidebar Info */}
                 <div className="space-y-6">
                     {/* Técnico Responsável */}
