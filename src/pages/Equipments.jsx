@@ -528,22 +528,24 @@ export default function Equipments() {
                         {bulkField === 'type' ? (
                             <div className="space-y-2">
                                 <Label>Novo Tipo</Label>
-                                <Select value={bulkValue} onValueChange={setBulkValue}>
-                                    <SelectTrigger><SelectValue placeholder="Selecione o tipo..." /></SelectTrigger>
-                                    <SelectContent>
-                                        {equipmentTypes.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
+                                <SearchableSelect
+                                    value={bulkValue}
+                                    onValueChange={setBulkValue}
+                                    options={equipmentTypes}
+                                    placeholder="Selecione o tipo..."
+                                    searchPlaceholder="Buscar tipo..."
+                                />
                             </div>
                         ) : (
                             <div className="space-y-2">
                                 <Label>Nova Marca</Label>
-                                <Select value={bulkValue} onValueChange={setBulkValue}>
-                                    <SelectTrigger><SelectValue placeholder="Selecione a marca..." /></SelectTrigger>
-                                    <SelectContent>
-                                        {brands.map(b => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
+                                <SearchableSelect
+                                    value={bulkValue}
+                                    onValueChange={setBulkValue}
+                                    options={brands}
+                                    placeholder="Selecione a marca..."
+                                    searchPlaceholder="Buscar marca..."
+                                />
                             </div>
                         )}
                     </div>

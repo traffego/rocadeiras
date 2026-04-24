@@ -101,26 +101,35 @@ export default function Layout() {
 
                         {/* Equipamentos com submenu */}
                         <div>
-                            <button
-                                onClick={() => setEquipMenuOpen(o => !o)}
-                                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
-                                    ${isOnEquipmentRoute
+                            <div className="flex items-center rounded-lg overflow-hidden">
+                                <NavLink
+                                    to="/equipments"
+                                    onClick={closeAll}
+                                    className={({ isActive }) =>
+                                        `flex items-center gap-3 px-3 py-2.5 flex-1 text-sm font-medium transition-colors rounded-l-lg ${isActive
+                                            ? 'bg-primary text-primary-foreground'
+                                            : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                                        }`
+                                    }
+                                >
+                                    <Cpu className="h-5 w-5" />
+                                    Equipamentos
+                                </NavLink>
+                                <button
+                                    onClick={() => setEquipMenuOpen(o => !o)}
+                                    className={`px-2 py-2.5 transition-colors rounded-r-lg ${isOnEquipmentRoute
                                         ? 'bg-primary text-primary-foreground'
                                         : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                                     }`}
-                            >
-                                <Cpu className="h-5 w-5" />
-                                <span className="flex-1 text-left">Equipamentos</span>
-                                {equipMenuOpen
-                                    ? <ChevronDown className="h-4 w-4" />
-                                    : <ChevronRight className="h-4 w-4" />
-                                }
-                            </button>
+                                >
+                                    {equipMenuOpen
+                                        ? <ChevronDown className="h-4 w-4" />
+                                        : <ChevronRight className="h-4 w-4" />
+                                    }
+                                </button>
+                            </div>
                             {equipMenuOpen && (
                                 <div className="mt-1 space-y-0.5">
-                                    <NavLink to="/equipments" className={subLinkClass} onClick={closeAll}>
-                                        <Cpu className="h-4 w-4" /> Combinações
-                                    </NavLink>
                                     <NavLink to="/equipment-types" className={subLinkClass} onClick={closeAll}>
                                         <Layers className="h-4 w-4" /> Tipos
                                     </NavLink>
