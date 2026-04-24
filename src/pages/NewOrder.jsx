@@ -86,23 +86,6 @@ export default function NewOrder() {
         queryFn: api.equipments.listCombinations
     })
 
-    // Marcas disponíveis para o tipo selecionado
-    const filteredBrands = formData.equipment_type_id
-        ? brands.filter(b =>
-            combinations.some(c => c.type_id === formData.equipment_type_id && c.brand_id === b.id)
-          )
-        : brands
-
-    // Modelos disponíveis para o tipo + marca selecionados
-    const filteredModels = (formData.equipment_type_id && formData.equipment_brand_id)
-        ? allModels.filter(m =>
-            combinations.some(c =>
-                c.type_id === formData.equipment_type_id &&
-                c.brand_id === formData.equipment_brand_id &&
-                c.model_id === m.id
-            )
-          )
-        : allModels
 
     // Create Customer Mutation
     const createCustomerMutation = useMutation({
@@ -152,6 +135,24 @@ export default function NewOrder() {
     const updateForm = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }))
     }
+
+    // Marcas disponíveis para o tipo selecionado
+    const filteredBrands = formData.equipment_type_id
+        ? brands.filter(b =>
+            combinations.some(c => c.type_id === formData.equipment_type_id && c.brand_id === b.id)
+          )
+        : brands
+
+    // Modelos disponíveis para o tipo + marca selecionados
+    const filteredModels = (formData.equipment_type_id && formData.equipment_brand_id)
+        ? allModels.filter(m =>
+            combinations.some(c =>
+                c.type_id === formData.equipment_type_id &&
+                c.brand_id === formData.equipment_brand_id &&
+                c.model_id === m.id
+            )
+          )
+        : allModels
 
     // Close dropdown when clicking outside
     useEffect(() => {
