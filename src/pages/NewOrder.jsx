@@ -95,10 +95,8 @@ export default function NewOrder() {
     // Create Order Mutation
     const createOrderMutation = useMutation({
         mutationFn: api.orders.create,
-        onSuccess: (data) => {
+        onSuccess: () => {
             queryClient.invalidateQueries(['orders'])
-            toast.success(`Ordem de serviço #${data.order_number} criada!`)
-            navigate('/')
         },
         onError: (e) => toast.error("Erro ao criar OS: " + e.message)
     })
@@ -273,7 +271,7 @@ export default function NewOrder() {
                 ))
             }
 
-            toast.success("Ordem de Serviço criada com sucesso!")
+            toast.success(`Ordem de serviço #${order.order_number} criada!`)
 
             // 5. Navigate to Detail
             navigate(`/os/${order.id}`)
