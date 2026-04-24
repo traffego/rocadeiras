@@ -1,4 +1,4 @@
-import { Outlet, NavLink } from 'react-router-dom'
+import { Outlet, NavLink, useLocation } from 'react-router-dom'
 import {
     ClipboardList,
     PlusCircle,
@@ -14,7 +14,9 @@ import {
     Cpu,
     Tag,
     Layers,
-    Box
+    Box,
+    ChevronDown,
+    ChevronRight,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useState } from 'react'
@@ -27,34 +29,36 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useAuth } from '@/lib/auth'
 
-const navigation = [
-    { name: 'Dashboard', href: '/', icon: ClipboardList },
-    { name: 'Serviços', href: '/os', icon: ClipboardList },
-    { name: 'Kanban', href: '/kanban', icon: LayoutIcon },
-    { name: 'Novo Serviço', href: '/os/new', icon: PlusCircle },
-    { name: 'Peças', href: '/inventory', icon: Package },
-    { name: 'Equipamentos', href: '/equipments', icon: Cpu },
-    { name: 'Marcas', href: '/brands', icon: Tag },
-    { name: 'Tipos', href: '/equipment-types', icon: Layers },
-    { name: 'Modelos', href: '/models', icon: Box },
-    { name: 'Clientes', href: '/customers', icon: Users },
-    { name: 'Técnicos', href: '/technicians', icon: Wrench },
-]
+const EQUIPMENT_SUB_ROUTES = ['/equipments', '/brands', '/equipment-types', '/models']
 
 export default function Layout() {
     const [sidebarOpen, setSidebarOpen] = useState(false)
     const { signOut } = useAuth()
     const { theme, setTheme } = useTheme()
+    const location = useLocation()
+
+    const isOnEquipmentRoute = EQUIPMENT_SUB_ROUTES.some(r => location.pathname.startsWith('/' + r.slice(1)))
+    const [equipMenuOpen, setEquipMenuOpen] = useState(isOnEquipmentRoute)
+
+    const navLinkClass = ({ isActive }) =>
+        `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive
+            ? 'bg-primary text-primary-foreground'
+            : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+        }`
+
+    const subLinkClass = ({ isActive }) =>
+        `flex items-center gap-2 pl-9 pr-3 py-2 rounded-lg text-sm transition-colors ${isActive
+            ? 'bg-primary/15 text-primary font-medium'
+            : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+        }`
+
+    const closeAll = () => setSidebarOpen(false)
 
     return (
         <div className="min-h-screen bg-background">
             {/* Mobile menu button */}
             <div className="lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center gap-4 bg-card border-b px-4 py-3">
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setSidebarOpen(!sidebarOpen)}
-                >
+                <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(!sidebarOpen)}>
                     <Menu className="h-6 w-6" />
                 </Button>
                 <h1 className="font-bold text-lg">ZMAQ</h1>
@@ -78,23 +82,64 @@ export default function Layout() {
                     </div>
 
                     {/* Navigation */}
-                    <nav className="flex-1 px-4 py-4 space-y-1">
-                        {navigation.map((item) => (
-                            <NavLink
-                                key={item.name}
-                                to={item.href}
-                                onClick={() => setSidebarOpen(false)}
-                                className={({ isActive }) =>
-                                    `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive
+                    <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
+                        <NavLink to="/" end className={navLinkClass} onClick={closeAll}>
+                            <ClipboardList className="h-5 w-5" /> Dashboard
+                        </NavLink>
+                        <NavLink to="/os" className={navLinkClass} onClick={closeAll}>
+                            <ClipboardList className="h-5 w-5" /> Serviços
+                        </NavLink>
+                        <NavLink to="/kanban" className={navLinkClass} onClick={closeAll}>
+                            <LayoutIcon className="h-5 w-5" /> Kanban
+                        </NavLink>
+                        <NavLink to="/os/new" className={navLinkClass} onClick={closeAll}>
+                            <PlusCircle className="h-5 w-5" /> Novo Serviço
+                        </NavLink>
+                        <NavLink to="/inventory" className={navLinkClass} onClick={closeAll}>
+                            <Package className="h-5 w-5" /> Peças
+                        </NavLink>
+
+                        {/* Equipamentos com submenu */}
+                        <div>
+                            <button
+                                onClick={() => setEquipMenuOpen(o => !o)}
+                                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                                    ${isOnEquipmentRoute
                                         ? 'bg-primary text-primary-foreground'
                                         : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                                    }`
-                                }
+                                    }`}
                             >
-                                <item.icon className="h-5 w-5" />
-                                {item.name}
-                            </NavLink>
-                        ))}
+                                <Cpu className="h-5 w-5" />
+                                <span className="flex-1 text-left">Equipamentos</span>
+                                {equipMenuOpen
+                                    ? <ChevronDown className="h-4 w-4" />
+                                    : <ChevronRight className="h-4 w-4" />
+                                }
+                            </button>
+                            {equipMenuOpen && (
+                                <div className="mt-1 space-y-0.5">
+                                    <NavLink to="/equipments" className={subLinkClass} onClick={closeAll}>
+                                        <Cpu className="h-4 w-4" /> Combinações
+                                    </NavLink>
+                                    <NavLink to="/equipment-types" className={subLinkClass} onClick={closeAll}>
+                                        <Layers className="h-4 w-4" /> Tipos
+                                    </NavLink>
+                                    <NavLink to="/brands" className={subLinkClass} onClick={closeAll}>
+                                        <Tag className="h-4 w-4" /> Marcas
+                                    </NavLink>
+                                    <NavLink to="/models" className={subLinkClass} onClick={closeAll}>
+                                        <Box className="h-4 w-4" /> Modelos
+                                    </NavLink>
+                                </div>
+                            )}
+                        </div>
+
+                        <NavLink to="/customers" className={navLinkClass} onClick={closeAll}>
+                            <Users className="h-5 w-5" /> Clientes
+                        </NavLink>
+                        <NavLink to="/technicians" className={navLinkClass} onClick={closeAll}>
+                            <Wrench className="h-5 w-5" /> Técnicos
+                        </NavLink>
                     </nav>
 
                     {/* Footer */}
@@ -117,32 +162,24 @@ export default function Layout() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-56">
                                 <DropdownMenuItem onClick={() => setTheme("light")}>
-                                    <Sun className="mr-2 h-4 w-4" />
-                                    Claro
+                                    <Sun className="mr-2 h-4 w-4" /> Claro
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => setTheme("dark")}>
-                                    <Moon className="mr-2 h-4 w-4" />
-                                    Escuro
+                                    <Moon className="mr-2 h-4 w-4" /> Escuro
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => setTheme("navy")}>
-                                    <Palette className="mr-2 h-4 w-4 text-blue-500" />
-                                    Marinho
+                                    <Palette className="mr-2 h-4 w-4 text-blue-500" /> Marinho
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
-                        <p className="text-xs text-muted-foreground text-center">
-                            v1.0.0 • ZMAQ
-                        </p>
+                        <p className="text-xs text-muted-foreground text-center">v1.0.0 • ZMAQ</p>
                     </div>
                 </div>
             </aside>
 
             {/* Overlay */}
             {sidebarOpen && (
-                <div
-                    className="fixed inset-0 z-30 bg-black/50 lg:hidden"
-                    onClick={() => setSidebarOpen(false)}
-                />
+                <div className="fixed inset-0 z-30 bg-black/50 lg:hidden" onClick={closeAll} />
             )}
 
             {/* Main content */}

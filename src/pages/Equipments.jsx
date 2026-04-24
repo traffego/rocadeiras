@@ -11,7 +11,9 @@ import {
     Square,
     X,
     Tag,
-    Layers
+    Layers,
+    Plus,
+    Check
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/services/api'
@@ -35,13 +37,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select'
+import { SearchableSelect } from '@/components/SearchableSelect'
 import { toast } from 'sonner'
 
 // Cores por nome do tipo
@@ -60,11 +56,18 @@ export default function Equipments() {
     const [editingEquipment, setEditingEquipment] = useState(null)
     const [formData, setFormData] = useState(EMPTY_FORM)
 
-    // Bulk selection
     const [selectedIds, setSelectedIds] = useState(new Set())
     const [bulkDialogOpen, setBulkDialogOpen] = useState(false)
     const [bulkField, setBulkField] = useState(null)
     const [bulkValue, setBulkValue] = useState('')
+
+    // Inline create state
+    const [newTypeName, setNewTypeName] = useState('')
+    const [newBrandName, setNewBrandName] = useState('')
+    const [newModelName, setNewModelName] = useState('')
+    const [addingType, setAddingType] = useState(false)
+    const [addingBrand, setAddingBrand] = useState(false)
+    const [addingModel, setAddingModel] = useState(false)
 
     const queryClient = useQueryClient()
 
@@ -125,6 +128,43 @@ export default function Equipments() {
     const bulkDeleteMutation = useMutation({
         mutationFn: (ids) => api.equipments.bulkDelete(ids),
         onSuccess: () => { queryClient.invalidateQueries(['equipments']); setSelectedIds(new Set()); toast.success('Equipamentos removidos!') },
+        onError: (e) => toast.error('Erro: ' + e.message)
+    })
+
+    // Inline create mutations
+    const createTypeMutation = useMutation({
+        mutationFn: (name) => api.equipmentTypes.create({ name }),
+        onSuccess: (data) => {
+            queryClient.invalidateQueries(['equipmentTypes'])
+            setFormData(prev => ({ ...prev, type_id: data.id }))
+            setNewTypeName('')
+            setAddingType(false)
+            toast.success('Tipo criado!')
+        },
+        onError: (e) => toast.error('Erro: ' + e.message)
+    })
+
+    const createBrandMutation = useMutation({
+        mutationFn: (name) => api.brands.create({ name }),
+        onSuccess: (data) => {
+            queryClient.invalidateQueries(['brands'])
+            setFormData(prev => ({ ...prev, brand_id: data.id }))
+            setNewBrandName('')
+            setAddingBrand(false)
+            toast.success('Marca criada!')
+        },
+        onError: (e) => toast.error('Erro: ' + e.message)
+    })
+
+    const createModelMutation = useMutation({
+        mutationFn: (name) => api.models.create({ name }),
+        onSuccess: (data) => {
+            queryClient.invalidateQueries(['models'])
+            setFormData(prev => ({ ...prev, model_id: data.id }))
+            setNewModelName('')
+            setAddingModel(false)
+            toast.success('Modelo criado!')
+        },
         onError: (e) => toast.error('Erro: ' + e.message)
     })
 
@@ -213,41 +253,133 @@ export default function Equipments() {
                             </DialogDescription>
                         </DialogHeader>
                         <div className="space-y-4 py-4">
+                            {/* Tipo */}
                             <div className="space-y-2">
-                                <Label>Tipo *</Label>
-                                <Select value={formData.type_id} onValueChange={(v) => setFormData(prev => ({ ...prev, type_id: v }))}>
-                                    <SelectTrigger><SelectValue placeholder="Selecione o tipo..." /></SelectTrigger>
-                                    <SelectContent>
-                                        {equipmentTypes.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
+                                <div className="flex items-center justify-between">
+                                    <Label>Tipo *</Label>
+                                    <button
+                                        type="button"
+                                        onClick={() => { setAddingType(o => !o); setNewTypeName('') }}
+                                        className="text-xs text-primary flex items-center gap-1 hover:underline"
+                                    >
+                                        <Plus className="h-3 w-3" /> Novo tipo
+                                    </button>
+                                </div>
+                                {addingType ? (
+                                    <div className="flex gap-2">
+                                        <Input
+                                            autoFocus
+                                            value={newTypeName}
+                                            onChange={e => setNewTypeName(e.target.value)}
+                                            placeholder="Nome do tipo..."
+                                            onKeyDown={e => e.key === 'Enter' && newTypeName.trim() && createTypeMutation.mutate(newTypeName.trim())}
+                                        />
+                                        <Button
+                                            type="button" size="icon" variant="outline"
+                                            disabled={!newTypeName.trim() || createTypeMutation.isPending}
+                                            onClick={() => createTypeMutation.mutate(newTypeName.trim())}
+                                        >
+                                            {createTypeMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                                        </Button>
+                                        <Button type="button" size="icon" variant="ghost" onClick={() => setAddingType(false)}>
+                                            <X className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <SearchableSelect
+                                        value={formData.type_id}
+                                        onValueChange={(v) => setFormData(prev => ({ ...prev, type_id: v }))}
+                                        options={equipmentTypes}
+                                        placeholder="Selecione o tipo..."
+                                        searchPlaceholder="Buscar tipo..."
+                                    />
+                                )}
                             </div>
+
+                            {/* Marca */}
                             <div className="space-y-2">
-                                <Label>Marca *</Label>
-                                <Select
-                                    value={formData.brand_id}
-                                    onValueChange={(v) => setFormData(prev => ({ ...prev, brand_id: v, model_id: '' }))}
-                                >
-                                    <SelectTrigger><SelectValue placeholder="Selecione a marca..." /></SelectTrigger>
-                                    <SelectContent>
-                                        {brands.map(b => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
+                                <div className="flex items-center justify-between">
+                                    <Label>Marca *</Label>
+                                    <button
+                                        type="button"
+                                        onClick={() => { setAddingBrand(o => !o); setNewBrandName('') }}
+                                        className="text-xs text-primary flex items-center gap-1 hover:underline"
+                                    >
+                                        <Plus className="h-3 w-3" /> Nova marca
+                                    </button>
+                                </div>
+                                {addingBrand ? (
+                                    <div className="flex gap-2">
+                                        <Input
+                                            autoFocus
+                                            value={newBrandName}
+                                            onChange={e => setNewBrandName(e.target.value)}
+                                            placeholder="Nome da marca..."
+                                            onKeyDown={e => e.key === 'Enter' && newBrandName.trim() && createBrandMutation.mutate(newBrandName.trim())}
+                                        />
+                                        <Button
+                                            type="button" size="icon" variant="outline"
+                                            disabled={!newBrandName.trim() || createBrandMutation.isPending}
+                                            onClick={() => createBrandMutation.mutate(newBrandName.trim())}
+                                        >
+                                            {createBrandMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                                        </Button>
+                                        <Button type="button" size="icon" variant="ghost" onClick={() => setAddingBrand(false)}>
+                                            <X className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <SearchableSelect
+                                        value={formData.brand_id}
+                                        onValueChange={(v) => setFormData(prev => ({ ...prev, brand_id: v, model_id: '' }))}
+                                        options={brands}
+                                        placeholder="Selecione a marca..."
+                                        searchPlaceholder="Buscar marca..."
+                                    />
+                                )}
                             </div>
+
+                            {/* Modelo */}
                             <div className="space-y-2">
-                                <Label>Modelo *</Label>
-                                <Select
-                                    value={formData.model_id}
-                                    onValueChange={(v) => setFormData(prev => ({ ...prev, model_id: v }))}
-                                    disabled={!formData.brand_id}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder={formData.brand_id ? 'Selecione o modelo...' : 'Selecione a marca primeiro'} />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {filteredModels.map(m => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
+                                <div className="flex items-center justify-between">
+                                    <Label>Modelo *</Label>
+                                    <button
+                                        type="button"
+                                        onClick={() => { setAddingModel(o => !o); setNewModelName('') }}
+                                        className="text-xs text-primary flex items-center gap-1 hover:underline"
+                                    >
+                                        <Plus className="h-3 w-3" /> Novo modelo
+                                    </button>
+                                </div>
+                                {addingModel ? (
+                                    <div className="flex gap-2">
+                                        <Input
+                                            autoFocus
+                                            value={newModelName}
+                                            onChange={e => setNewModelName(e.target.value)}
+                                            placeholder="Nome do modelo..."
+                                            onKeyDown={e => e.key === 'Enter' && newModelName.trim() && createModelMutation.mutate(newModelName.trim())}
+                                        />
+                                        <Button
+                                            type="button" size="icon" variant="outline"
+                                            disabled={!newModelName.trim() || createModelMutation.isPending}
+                                            onClick={() => createModelMutation.mutate(newModelName.trim())}
+                                        >
+                                            {createModelMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                                        </Button>
+                                        <Button type="button" size="icon" variant="ghost" onClick={() => setAddingModel(false)}>
+                                            <X className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <SearchableSelect
+                                        value={formData.model_id}
+                                        onValueChange={(v) => setFormData(prev => ({ ...prev, model_id: v }))}
+                                        options={filteredModels}
+                                        placeholder="Selecione o modelo..."
+                                        searchPlaceholder="Buscar modelo..."
+                                    />
+                                )}
                             </div>
                         </div>
                         <DialogFooter>
