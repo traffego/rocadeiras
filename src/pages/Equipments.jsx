@@ -52,6 +52,7 @@ const EMPTY_FORM = { type_id: '', brand_id: '', model_id: '' }
 export default function Equipments() {
     const [search, setSearch] = useState('')
     const [typeFilter, setTypeFilter] = useState('all')
+    const [brandFilter, setBrandFilter] = useState('all')
     const [dialogOpen, setDialogOpen] = useState(false)
     const [editingEquipment, setEditingEquipment] = useState(null)
     const [formData, setFormData] = useState(EMPTY_FORM)
@@ -172,12 +173,21 @@ export default function Equipments() {
         const brandName = e.brand?.name || ''
         const typeName = e.equipment_type?.name || ''
         const matchesType = typeFilter === 'all' || e.equipment_type?.id === typeFilter
+        const matchesBrand = brandFilter === 'all' || e.brand?.id === brandFilter
         const matchesSearch =
             brandName.toLowerCase().includes(search.toLowerCase()) ||
             e.model_data?.name?.toLowerCase().includes(search.toLowerCase()) ||
             typeName.toLowerCase().includes(search.toLowerCase())
-        return matchesType && matchesSearch
+        return matchesType && matchesBrand && matchesSearch
     })
+
+    // Brands visible for current type filter (for contextual brand chips)
+    const visibleBrands = typeFilter === 'all'
+        ? brands
+        : brands.filter(b => equipments.some(e => e.equipment_type?.id === typeFilter && e.brand?.id === b.id))
+
+    const hasActiveFilter = typeFilter !== 'all' || brandFilter !== 'all'
+    const clearFilters = () => { setTypeFilter('all'); setBrandFilter('all') }
 
     const isSelectionMode = selectedIds.size > 0
     const allFilteredSelected = filtered.length > 0 && filtered.every(e => selectedIds.has(e.id))
@@ -394,8 +404,9 @@ export default function Equipments() {
             </div>
 
             {/* Filters */}
-            <div className="flex flex-col sm:flex-row gap-3">
-                <div className="relative flex-1">
+            <div className="space-y-3">
+                {/* Search */}
+                <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                         placeholder="Buscar por tipo, marca ou modelo..."
@@ -404,21 +415,52 @@ export default function Equipments() {
                         className="pl-10"
                     />
                 </div>
-                <div className="flex gap-2 flex-wrap">
-                    <Button size="sm" variant={typeFilter === 'all' ? 'default' : 'outline'} onClick={() => setTypeFilter('all')}>
+
+                {/* Type chips */}
+                <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs text-muted-foreground font-medium w-10">Tipo:</span>
+                    <Button size="sm" variant={typeFilter === 'all' ? 'default' : 'outline'}
+                        onClick={() => { setTypeFilter('all'); setBrandFilter('all') }}>
                         Todos
                     </Button>
                     {equipmentTypes.map(t => (
                         <Button
-                            key={t.id}
-                            size="sm"
+                            key={t.id} size="sm"
                             variant={typeFilter === t.id ? 'default' : 'outline'}
-                            onClick={() => setTypeFilter(t.id)}
+                            onClick={() => { setTypeFilter(t.id); setBrandFilter('all') }}
                         >
                             {t.name}
                         </Button>
                     ))}
                 </div>
+
+                {/* Brand chips — only if a type is selected */}
+                {typeFilter !== 'all' && visibleBrands.length > 0 && (
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs text-muted-foreground font-medium w-10">Marca:</span>
+                        <Button size="sm" variant={brandFilter === 'all' ? 'secondary' : 'outline'}
+                            onClick={() => setBrandFilter('all')}>
+                            Todas
+                        </Button>
+                        {visibleBrands.map(b => (
+                            <Button
+                                key={b.id} size="sm"
+                                variant={brandFilter === b.id ? 'secondary' : 'outline'}
+                                onClick={() => setBrandFilter(prev => prev === b.id ? 'all' : b.id)}
+                            >
+                                {b.name}
+                            </Button>
+                        ))}
+                    </div>
+                )}
+
+                {/* Active filter summary */}
+                {hasActiveFilter && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <span>{filtered.length} resultado(s)</span>
+                        <button onClick={clearFilters} className="text-primary hover:underline text-xs">Limpar filtros</button>
+                    </div>
+                )}
             </div>
 
             {/* Select-all bar */}
