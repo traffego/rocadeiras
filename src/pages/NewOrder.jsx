@@ -226,6 +226,11 @@ export default function NewOrder() {
             }
 
             // Create Order
+            // Resolve type and brand names from IDs (the DB uses a text column with check constraint)
+            const selectedTypeName = equipmentTypes.find(t => t.id === formData.equipment_type_id)?.name || ''
+            const selectedBrandName = brands.find(b => b.id === formData.equipment_brand_id)?.name || ''
+            const selectedModelName = allModels.find(m => m.id === formData.equipment_model_id)?.name || ''
+
             const orderData = {
                 customer_id: customerId,
                 ...(equipmentNotInList
@@ -235,6 +240,9 @@ export default function NewOrder() {
                         equipment_model: formData.equipment_model_custom,
                     }
                     : {
+                        equipment_type: selectedTypeName,
+                        equipment_brand: selectedBrandName,
+                        equipment_model: selectedModelName,
                         equipment_type_id: formData.equipment_type_id,
                         equipment_model_id: formData.equipment_model_id,
                     }
