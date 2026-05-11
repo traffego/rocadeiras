@@ -192,7 +192,8 @@ export default function OrderDetail() {
             queryClient.invalidateQueries(['os_logs', id])
             toast.success('Aceite registrado!')
         } catch (e) {
-            toast.error('Erro ao registrar aceite')
+            console.error('Aceite error:', e)
+            toast.error('Erro ao registrar aceite: ' + (e?.message || String(e)))
         }
     }
 

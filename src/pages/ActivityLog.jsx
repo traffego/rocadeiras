@@ -7,7 +7,6 @@ import {
     ExternalLink,
     Loader2,
     Calendar,
-    User,
     ChevronDown,
     X
 } from 'lucide-react'
@@ -216,41 +215,38 @@ export default function ActivityLogPage() {
                                         const cfg = ACTION_LABELS[log.action] || ACTION_LABELS.created
                                         const num = log.service_orders?.order_number?.toString().padStart(4, '0')
                                         return (
-                                            <div key={log.id} className="flex items-center gap-4 px-4 py-3 hover:bg-muted/30 transition-colors">
-                                                {/* Badge */}
-                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${cfg.color}`}>
+                                            <div key={log.id} className="flex items-start gap-4 px-4 py-3 hover:bg-muted/30 transition-colors">
+                                                {/* Badge ação */}
+                                                <span className={`mt-0.5 text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 whitespace-nowrap ${cfg.color}`}>
                                                     {cfg.label}
                                                 </span>
 
-                                                {/* Message */}
+                                                {/* Mensagem */}
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="text-sm font-medium truncate">{buildMessage(log)}</p>
-                                                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                                                        <User className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                                                        <span className="text-xs text-muted-foreground">
-                                                            {log.user_name}
-                                                        </span>
-                                                        {log.user_username && (
-                                                            <span className="text-xs text-muted-foreground opacity-60">@{log.user_username}</span>
-                                                        )}
-                                                        {log.user_role && (
-                                                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
-                                                                {log.user_role}
-                                                            </span>
-                                                        )}
-                                                    </div>
+                                                    <p className="text-sm font-medium">{buildMessage(log)}</p>
+                                                    <p className="text-xs text-muted-foreground mt-0.5">
+                                                        {new Date(log.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                                    </p>
                                                 </div>
 
-                                                {/* Time */}
-                                                <span className="text-xs text-muted-foreground flex-shrink-0">
-                                                    {new Date(log.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                                                </span>
+                                                {/* Usuário */}
+                                                <div className="flex-shrink-0 text-right min-w-[140px]">
+                                                    <p className="text-sm font-semibold leading-tight">{log.user_name}</p>
+                                                    {log.user_username && (
+                                                        <p className="text-xs text-muted-foreground">@{log.user_username}</p>
+                                                    )}
+                                                    {log.user_role && (
+                                                        <span className="inline-block mt-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+                                                            {log.user_role}
+                                                        </span>
+                                                    )}
+                                                </div>
 
-                                                {/* Link to OS */}
+                                                {/* Link OS */}
                                                 {log.service_order_id && (
                                                     <Link
                                                         to={`/os/${log.service_order_id}`}
-                                                        className="text-muted-foreground hover:text-foreground flex-shrink-0"
+                                                        className="mt-0.5 text-muted-foreground hover:text-foreground flex-shrink-0"
                                                         title={`Abrir OS #${num}`}
                                                     >
                                                         <ExternalLink className="h-4 w-4" />
