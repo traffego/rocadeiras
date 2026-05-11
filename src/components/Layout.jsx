@@ -17,7 +17,10 @@ import {
     Box,
     ChevronDown,
     ChevronRight,
+    UserCircle,
+    ShieldCheck,
 } from 'lucide-react'
+import { ROLE_LABELS, ROLE_COLORS } from '@/lib/roles'
 import { Button } from '@/components/ui/button'
 import { useState } from 'react'
 import { useTheme } from '@/components/theme-provider'
@@ -33,7 +36,7 @@ const EQUIPMENT_SUB_ROUTES = ['/equipments', '/brands', '/equipment-types', '/mo
 
 export default function Layout() {
     const [sidebarOpen, setSidebarOpen] = useState(false)
-    const { signOut } = useAuth()
+    const { signOut, profile, isAdmin } = useAuth()
     const { theme, setTheme } = useTheme()
     const location = useLocation()
 
@@ -149,10 +152,29 @@ export default function Layout() {
                         <NavLink to="/technicians" className={navLinkClass} onClick={closeAll}>
                             <Wrench className="h-5 w-5" /> Técnicos
                         </NavLink>
+                        {isAdmin && (
+                            <NavLink to="/users" className={navLinkClass} onClick={closeAll}>
+                                <ShieldCheck className="h-5 w-5" /> Usuários
+                            </NavLink>
+                        )}
                     </nav>
 
                     {/* Footer */}
                     <div className="px-4 py-4 border-t space-y-4">
+                        {/* User info */}
+                        {profile && (
+                            <div className="flex items-center gap-3 px-1 py-2">
+                                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                    <UserCircle className="h-5 w-5 text-primary" />
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="text-sm font-medium truncate">{profile.name}</p>
+                                    <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full ${ROLE_COLORS[profile.role]}`}>
+                                        {ROLE_LABELS[profile.role]}
+                                    </span>
+                                </div>
+                            </div>
+                        )}
                         <Button
                             variant="outline"
                             className="w-full justify-start text-muted-foreground"

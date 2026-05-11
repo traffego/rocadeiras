@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/services/api'
+import { useAuth } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -38,6 +39,7 @@ export default function Technicians() {
     const [name, setName] = useState('')
 
     const queryClient = useQueryClient()
+    const { isAdmin } = useAuth()
 
     // Fetch Technicians
     const { data: technicians = [], isLoading } = useQuery({
@@ -121,6 +123,7 @@ export default function Technicians() {
                         {technicians.filter(t => t.active).length} técnicos ativos
                     </p>
                 </div>
+                {isAdmin && (
                 <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                     <DialogTrigger asChild>
                         <Button onClick={openNewDialog}>
@@ -161,6 +164,7 @@ export default function Technicians() {
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
+                )}
             </div>
 
             {/* List */}
@@ -187,6 +191,7 @@ export default function Technicians() {
                                         </Badge>
                                     </div>
                                 </div>
+                                {isAdmin && (
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -217,6 +222,7 @@ export default function Technicians() {
                                         </DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
+                                )}
                             </div>
                         </CardHeader>
                     </Card>

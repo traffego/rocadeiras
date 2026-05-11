@@ -4,8 +4,7 @@ import { useAuth } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
-import { Wrench, Loader2 } from 'lucide-react'
+import { Wrench, Loader2, User } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function Login() {
@@ -13,11 +12,10 @@ export default function Login() {
     const location = useLocation()
     const { signIn } = useAuth()
 
-    const [email, setEmail] = useState('')
+    const [identifier, setIdentifier] = useState('')
     const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
 
-    // Redirect to where user wanted to go, or home
     const from = location.state?.from?.pathname || '/'
 
     const handleLogin = async (e) => {
@@ -25,10 +23,10 @@ export default function Login() {
         setLoading(true)
 
         try {
-            const { error } = await signIn(email, password)
+            const { error } = await signIn(identifier.trim(), password)
 
             if (error) {
-                toast.error('Erro ao entrar', { description: 'Verifique seu e-mail e senha' })
+                toast.error('Erro ao entrar', { description: 'Verifique seu usuário e senha' })
             } else {
                 navigate(from, { replace: true })
             }
@@ -59,16 +57,20 @@ export default function Login() {
                     <form onSubmit={handleLogin} className="space-y-6">
                         <div className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="email">E-mail</Label>
-                                <Input
-                                    id="email"
-                                    type="email"
-                                    placeholder="admin@oficina.com"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    required
-                                    className="h-11"
-                                />
+                                <Label htmlFor="identifier">Usuário ou E-mail</Label>
+                                <div className="relative">
+                                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                        id="identifier"
+                                        type="text"
+                                        placeholder="usuario ou admin@email.com"
+                                        value={identifier}
+                                        onChange={(e) => setIdentifier(e.target.value)}
+                                        required
+                                        className="h-11 pl-10"
+                                        autoComplete="username"
+                                    />
+                                </div>
                             </div>
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between">
@@ -87,6 +89,7 @@ export default function Login() {
                                     onChange={(e) => setPassword(e.target.value)}
                                     required
                                     className="h-11"
+                                    autoComplete="current-password"
                                 />
                             </div>
                         </div>

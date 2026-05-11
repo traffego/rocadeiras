@@ -17,6 +17,7 @@ import {
 } from '@dnd-kit/sortable'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/services/api'
+import { useAuth } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Plus, X, GripVertical, AlertCircle, Loader2, Wrench, ZoomIn, ZoomOut, Scan } from 'lucide-react'
@@ -226,6 +227,7 @@ function SortableTask({ order, columns, onMove, zoom }) {
 
 export default function Kanban() {
     const queryClient = useQueryClient()
+    const { isAdmin } = useAuth()
     const [activeDragItem, setActiveDragItem] = useState(null)
     const [newColumnName, setNewColumnName] = useState('')
     const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -381,6 +383,7 @@ export default function Kanban() {
         <div className="h-[calc(100vh-6rem)] flex flex-col">
             <div className="flex justify-between items-center mb-6 px-2">
                 <h1 className="text-3xl font-bold">Quadro Kanban</h1>
+                {isAdmin && (
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                     <DialogTrigger asChild>
                         <Button>
@@ -404,6 +407,7 @@ export default function Kanban() {
                         </div>
                     </DialogContent>
                 </Dialog>
+                )}
             </div>
 
             <div className="flex justify-end gap-2 px-2 mb-2">

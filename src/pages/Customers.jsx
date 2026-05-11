@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/services/api'
+import { useAuth } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -45,6 +46,7 @@ export default function Customers() {
     })
 
     const queryClient = useQueryClient()
+    const { isAdmin } = useAuth()
 
     // Fetch Customers
     const { data: customers = [], isLoading } = useQuery({
@@ -141,6 +143,7 @@ export default function Customers() {
                         {customers.length} clientes cadastrados
                     </p>
                 </div>
+                {isAdmin && (
                 <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                     <DialogTrigger asChild>
                         <Button onClick={openNewDialog}>
@@ -208,6 +211,7 @@ export default function Customers() {
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
+                )}
             </div>
 
             {/* Search */}
@@ -235,6 +239,7 @@ export default function Customers() {
                             <CardHeader className="pb-2">
                                 <div className="flex items-start justify-between">
                                     <CardTitle className="text-lg">{customer.name}</CardTitle>
+                                    {isAdmin && (
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                             <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -252,6 +257,7 @@ export default function Customers() {
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
+                                    )}
                                 </div>
                             </CardHeader>
                             <CardContent className="space-y-3">

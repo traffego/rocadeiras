@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/services/api'
+import { useAuth } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -38,6 +39,7 @@ export default function Brands() {
     const [formName, setFormName] = useState('')
 
     const queryClient = useQueryClient()
+    const { isAdmin } = useAuth()
 
     const { data: brands = [], isLoading } = useQuery({
         queryKey: ['brands'],
@@ -122,6 +124,7 @@ export default function Brands() {
                     </p>
                 </div>
 
+                {isAdmin && (
                 <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                     <DialogTrigger asChild>
                         <Button onClick={openNewDialog}>
@@ -163,6 +166,7 @@ export default function Brands() {
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
+                )}
             </div>
 
             {/* Search */}
@@ -194,6 +198,7 @@ export default function Brands() {
                                         <Tag className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                                         <span className="font-semibold text-sm truncate">{brand.name}</span>
                                     </div>
+                                    {isAdmin && (
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                             <Button
@@ -218,6 +223,7 @@ export default function Brands() {
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
+                                    )}
                                 </div>
                             </CardContent>
                         </Card>

@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/services/api'
+import { useAuth } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -40,6 +41,7 @@ export default function Models() {
     const [formData, setFormData] = useState(EMPTY_FORM)
 
     const queryClient = useQueryClient()
+    const { isAdmin } = useAuth()
 
     const { data: models = [], isLoading } = useQuery({
         queryKey: ['models'],
@@ -115,6 +117,7 @@ export default function Models() {
                     <p className="text-muted-foreground">{models.length} modelos cadastrados</p>
                 </div>
 
+                {isAdmin && (
                 <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                     <DialogTrigger asChild>
                         <Button onClick={openNewDialog}>
@@ -150,6 +153,7 @@ export default function Models() {
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
+                )}
             </div>
 
             {/* Search */}
@@ -178,6 +182,7 @@ export default function Models() {
                             <CardContent className="p-4">
                                 <div className="flex items-center justify-between gap-2">
                                     <span className="font-semibold text-sm truncate">{model.name}</span>
+                                    {isAdmin && (
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                             <Button
@@ -197,6 +202,7 @@ export default function Models() {
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
+                                    )}
                                 </div>
                             </CardContent>
                         </Card>

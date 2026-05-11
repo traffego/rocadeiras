@@ -480,6 +480,46 @@ export const api = {
                 .eq('id', id)
             if (error) throw error
         }
+    },
+
+    // App Users (sistema de funções)
+    users: {
+        list: async () => {
+            const { data, error } = await supabase
+                .from('app_users')
+                .select('id, name, username, role, active, created_at')
+                .order('name')
+            if (error) throw error
+            return data
+        },
+        create: async ({ name, username, password, role }) => {
+            const { data, error } = await supabase.rpc('create_app_user', {
+                p_name: name,
+                p_username: username,
+                p_password: password,
+                p_role: role
+            })
+            if (error) throw error
+            return data
+        },
+        update: async (id, { name, username, role, password }) => {
+            const { data, error } = await supabase.rpc('update_app_user', {
+                p_id: id,
+                p_name: name,
+                p_username: username,
+                p_role: role,
+                p_password: password || null
+            })
+            if (error) throw error
+            return data
+        },
+        delete: async (id) => {
+            const { error } = await supabase
+                .from('app_users')
+                .delete()
+                .eq('id', id)
+            if (error) throw error
+        }
     }
 }
 

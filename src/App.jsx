@@ -1,7 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import { Toaster } from '@/components/ui/sonner'
 import { AuthProvider } from '@/lib/auth'
-import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { ProtectedRoute, AdminRoute } from '@/components/ProtectedRoute'
 import { ThemeProvider } from '@/components/theme-provider'
 import Layout from './components/Layout'
 import Login from './pages/Login'
@@ -19,6 +19,8 @@ import Equipments from './pages/Equipments'
 import Brands from './pages/Brands'
 import EquipmentTypes from './pages/EquipmentTypes'
 import Models from './pages/Models'
+import UsersPage from './pages/Users'
+
 
 function App() {
   return (
@@ -46,6 +48,9 @@ function App() {
             <Route path="customers" element={<Customers />} />
             <Route path="technicians" element={<Technicians />} />
             <Route path="os/:id" element={<OrderDetail />} />
+            <Route path="users" element={
+              <AdminRoute><UsersPage /></AdminRoute>
+            } />
           </Route>
         </Routes>
         <Toaster />

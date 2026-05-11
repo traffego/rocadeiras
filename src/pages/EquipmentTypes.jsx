@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/services/api'
+import { useAuth } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -38,6 +39,7 @@ export default function EquipmentTypes() {
     const [formData, setFormData] = useState({ name: '' })
 
     const queryClient = useQueryClient()
+    const { isAdmin } = useAuth()
 
     const { data: types = [], isLoading } = useQuery({
         queryKey: ['equipmentTypes'],
@@ -121,6 +123,7 @@ export default function EquipmentTypes() {
                     <p className="text-muted-foreground">{types.length} tipos cadastrados</p>
                 </div>
 
+                {isAdmin && (
                 <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                     <DialogTrigger asChild>
                         <Button onClick={openNewDialog}>
@@ -156,6 +159,7 @@ export default function EquipmentTypes() {
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
+                )}
             </div>
 
             {/* Search */}
@@ -186,6 +190,7 @@ export default function EquipmentTypes() {
                                     <div className="flex flex-col min-w-0">
                                         <span className="font-semibold text-sm truncate">{type.name}</span>
                                     </div>
+                                    {isAdmin && (
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                             <Button
@@ -210,6 +215,7 @@ export default function EquipmentTypes() {
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
+                                    )}
                                 </div>
                             </CardContent>
                         </Card>

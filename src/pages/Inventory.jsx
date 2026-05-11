@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/services/api'
+import { useAuth } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -30,6 +31,7 @@ import { Badge } from '@/components/ui/badge'
 
 export default function Inventory() {
     const queryClient = useQueryClient()
+    const { isAdmin } = useAuth()
     const [searchTerm, setSearchTerm] = useState('')
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [editingPart, setEditingPart] = useState(null)
@@ -121,6 +123,7 @@ export default function Inventory() {
                     <p className="text-muted-foreground">Gerencie o inventário e preços de peças para o orçamento.</p>
                 </div>
 
+                {isAdmin && (
                 <Dialog open={isDialogOpen} onOpenChange={(open) => {
                     setIsDialogOpen(open)
                     if (!open) resetForm()
@@ -194,6 +197,7 @@ export default function Inventory() {
                         </form>
                     </DialogContent>
                 </Dialog>
+                )}
             </div>
 
             <Card>
@@ -228,6 +232,8 @@ export default function Inventory() {
                                                 </div>
                                             </div>
                                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                {isAdmin && (
+                                                <>
                                                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(part)}>
                                                     <Edit2 className="h-4 w-4" />
                                                 </Button>
@@ -243,6 +249,8 @@ export default function Inventory() {
                                                 >
                                                     <Trash2 className="h-4 w-4" />
                                                 </Button>
+                                                </>
+                                                )}
                                             </div>
                                         </div>
                                         <div className="mt-auto pt-4 flex items-center justify-between">
