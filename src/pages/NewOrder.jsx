@@ -17,6 +17,7 @@ import {
 import { storage } from '@/services/storage'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/services/api'
+import { useAuth } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -34,6 +35,7 @@ const steps = [
 
 export default function NewOrder() {
     const navigate = useNavigate()
+    const { profile } = useAuth()
     const [currentStep, setCurrentStep] = useState(1)
     const [isNewClient, setIsNewClient] = useState(false)
     const [equipmentNotInList, setEquipmentNotInList] = useState(false)
@@ -263,6 +265,17 @@ export default function NewOrder() {
             }
 
             const order = await createOrderMutation.mutateAsync(orderData)
+
+            // Log criação da OS
+            try {
+                await api.osLogs.create({
+                    service_order_id: order.id,
+                    action: 'created',
+                    phase: orderData.current_status,
+                    user_name: profile?.name || 'Sistema',
+                    user_role: profile?.role || null
+                })
+            } catch (logErr) { console.warn('Log error:', logErr) }
 
             // 4. Save uploaded files
             if (uploadedFiles.length > 0) {

@@ -520,6 +520,28 @@ export const api = {
                 .eq('id', id)
             if (error) throw error
         }
+    },
+
+    // OS Logs (histórico de movimentações)
+    osLogs: {
+        getByOrderId: async (orderId) => {
+            const { data, error } = await supabase
+                .from('os_logs')
+                .select('*')
+                .eq('service_order_id', orderId)
+                .order('created_at', { ascending: true })
+            if (error) throw error
+            return data
+        },
+        create: async (log) => {
+            const { data, error } = await supabase
+                .from('os_logs')
+                .insert(log)
+                .select()
+                .single()
+            if (error) throw error
+            return data
+        }
     }
 }
 

@@ -15,8 +15,11 @@ import {
     XCircle,
     X,
     Play,
-    Youtube
+    Youtube,
+    History,
+    CheckSquare
 } from 'lucide-react'
+import { useAuth } from '@/lib/auth'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/services/api'
 import { storage } from '@/services/storage'
@@ -62,6 +65,7 @@ export default function OrderDetail() {
     const [obs, setObs] = useState('')
 
     const queryClient = useQueryClient()
+    const { profile } = useAuth()
 
     const { data: order, isLoading, isError, error } = useQuery({
         queryKey: ['order', id],
@@ -72,6 +76,12 @@ export default function OrderDetail() {
     const { data: technicians = [] } = useQuery({
         queryKey: ['technicians'],
         queryFn: api.technicians.list
+    })
+
+    const { data: logs = [] } = useQuery({
+        queryKey: ['os_logs', id],
+        queryFn: () => api.osLogs.getByOrderId(id),
+        enabled: !!id
     })
 
     // Update mutation
@@ -126,9 +136,62 @@ export default function OrderDetail() {
     const currentStepIndex = statusFlow.indexOf(order.current_status || 'received')
     const nextStep = statusFlow[currentStepIndex + 1]
 
-    const handleAdvanceStep = () => {
+    // Log helpers
+    const isAcceptablePhase = order.current_status !== 'received' && order.current_status !== 'finished'
+    const currentPhaseAccepted = logs.some(l => l.action === 'accepted' && l.phase === order.current_status)
+
+    const phaseLabel = (phase) => statusConfig[phase]?.label || phase || ''
+    const formatLog = (log) => {
+        const num = order.order_number?.toString().padStart(4, '0') || '0000'
+        const d = new Date(log.created_at)
+        const date = d.toLocaleDateString('pt-BR')
+        const time = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+        const suffix = `— ${date} às ${time}`
+        switch (log.action) {
+            case 'created':   return `OS #${num} cadastrada por ${log.user_name} ${suffix}`
+            case 'moved':     return `OS #${num} movida para [${phaseLabel(log.phase)}] por ${log.user_name} ${suffix}`
+            case 'accepted':  return `OS #${num} aceita em [${phaseLabel(log.phase)}] por ${log.user_name} ${suffix}`
+            case 'finalized': return `OS #${num} finalizada por ${log.user_name} ${suffix}`
+            default:          return `${log.action} por ${log.user_name} ${suffix}`
+        }
+    }
+    const logColor = (action) => ({
+        created:   'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
+        moved:     'bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400',
+        accepted:  'bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-400',
+        finalized: 'bg-purple-100 text-purple-600 dark:bg-purple-900/40 dark:text-purple-400',
+    }[action] || 'bg-muted text-muted-foreground')
+
+    const handleAdvanceStep = async () => {
         if (!nextStep) return
-        updateOrderMutation.mutate({ current_status: nextStep })
+        await updateOrderMutation.mutateAsync({ current_status: nextStep })
+        const isFinished = nextStep === 'finished'
+        try {
+            await api.osLogs.create({
+                service_order_id: id,
+                action: isFinished ? 'finalized' : 'moved',
+                phase: nextStep,
+                user_name: profile?.name || 'Sistema',
+                user_role: profile?.role || null
+            })
+        } catch (e) { console.warn('log error', e) }
+        queryClient.invalidateQueries(['os_logs', id])
+    }
+
+    const handleAccept = async () => {
+        try {
+            await api.osLogs.create({
+                service_order_id: id,
+                action: 'accepted',
+                phase: order.current_status,
+                user_name: profile?.name || 'Sistema',
+                user_role: profile?.role || null
+            })
+            queryClient.invalidateQueries(['os_logs', id])
+            toast.success('Aceite registrado!')
+        } catch (e) {
+            toast.error('Erro ao registrar aceite')
+        }
     }
 
     const handleFileUpload = async (e) => {
@@ -196,7 +259,17 @@ export default function OrderDetail() {
                 </div>
 
                 {nextStep && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                        {isAcceptablePhase && !currentPhaseAccepted && (
+                            <Button
+                                variant="outline"
+                                onClick={handleAccept}
+                                className="border-green-500 text-green-600 hover:bg-green-50"
+                            >
+                                <CheckSquare className="mr-2 h-4 w-4" />
+                                Aceitar {statusConfig[order.current_status]?.label}
+                            </Button>
+                        )}
                         <Button onClick={handleAdvanceStep} disabled={updateOrderMutation.isPending}>
                             {updateOrderMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                             Avançar para {statusConfig[nextStep]?.label}
@@ -249,15 +322,53 @@ export default function OrderDetail() {
                         </CardContent>
                     </Card>
 
+                    {/* Histórico de Movimentações */}
+                    <Card>
+                        <CardHeader className="pb-3">
+                            <CardTitle className="text-base flex items-center gap-2">
+                                <History className="h-4 w-4" />
+                                Histórico
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {logs.length === 0 ? (
+                                <p className="text-sm text-muted-foreground text-center py-4">Nenhum registro ainda.</p>
+                            ) : (
+                                <div className="space-y-2.5">
+                                    {logs.map((log) => (
+                                        <div key={log.id} className="flex items-start gap-3">
+                                            <span className={`mt-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${logColor(log.action)}`}>
+                                                {log.action === 'created' ? 'CRIOU' :
+                                                 log.action === 'moved' ? 'MOVEU' :
+                                                 log.action === 'accepted' ? 'ACEITOU' : 'FINALIZOU'}
+                                            </span>
+                                            <p className="text-xs text-muted-foreground leading-snug">{formatLog(log)}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+
                     {/* Orçamento */}
                     <BudgetSection
                         orderId={id}
                         orderStatus={order.current_status}
-                        onApprove={() => {
+                        onApprove={async () => {
                             const currentIdx = statusFlow.indexOf(order.current_status || 'received')
                             const washingIdx = statusFlow.indexOf('washing')
                             if (currentIdx < washingIdx) {
-                                updateOrderMutation.mutate({ current_status: 'washing' })
+                                await updateOrderMutation.mutateAsync({ current_status: 'washing' })
+                                try {
+                                    await api.osLogs.create({
+                                        service_order_id: id,
+                                        action: 'moved',
+                                        phase: 'washing',
+                                        user_name: profile?.name || 'Sistema',
+                                        user_role: profile?.role || null
+                                    })
+                                    queryClient.invalidateQueries(['os_logs', id])
+                                } catch (e) { console.warn('log error', e) }
                             }
                         }}
                     />

@@ -227,7 +227,7 @@ function SortableTask({ order, columns, onMove, zoom }) {
 
 export default function Kanban() {
     const queryClient = useQueryClient()
-    const { isAdmin } = useAuth()
+    const { isAdmin, profile } = useAuth()
     const [activeDragItem, setActiveDragItem] = useState(null)
     const [newColumnName, setNewColumnName] = useState('')
     const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -293,9 +293,17 @@ export default function Kanban() {
         mutationFn: async ({ orderId, newStatus }) => {
             return api.orders.update(orderId, { current_status: newStatus })
         },
-        onSuccess: () => {
+        onSuccess: (data, variables) => {
             queryClient.invalidateQueries(['orders'])
             toast.success("Status atualizado!")
+            const isFinished = variables.newStatus === 'finished'
+            api.osLogs.create({
+                service_order_id: variables.orderId,
+                action: isFinished ? 'finalized' : 'moved',
+                phase: variables.newStatus,
+                user_name: profile?.name || 'Sistema',
+                user_role: profile?.role || null
+            }).catch(e => console.warn('log error', e))
         }
     })
 
