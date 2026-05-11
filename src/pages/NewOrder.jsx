@@ -264,6 +264,13 @@ export default function NewOrder() {
                     : 'received'
             }
 
+            // Guardar contra tipo vazio (violaria constraint do banco)
+            if (!equipmentNotInList && !selectedTypeName) {
+                toast.error('Selecione um tipo de equipamento válido')
+                setLoading(false)
+                return
+            }
+
             const order = await createOrderMutation.mutateAsync(orderData)
 
             // Log criação da OS
