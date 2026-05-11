@@ -225,12 +225,19 @@ export default function ActivityLogPage() {
                                                 {/* Message */}
                                                 <div className="flex-1 min-w-0">
                                                     <p className="text-sm font-medium truncate">{buildMessage(log)}</p>
-                                                    <div className="flex items-center gap-2 mt-0.5">
+                                                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                                                         <User className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                                                        <span className="text-xs text-muted-foreground truncate">
+                                                        <span className="text-xs text-muted-foreground">
                                                             {log.user_name}
-                                                            {log.user_role && <span className="ml-1 opacity-60">({log.user_role})</span>}
                                                         </span>
+                                                        {log.user_username && (
+                                                            <span className="text-xs text-muted-foreground opacity-60">@{log.user_username}</span>
+                                                        )}
+                                                        {log.user_role && (
+                                                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+                                                                {log.user_role}
+                                                            </span>
+                                                        )}
                                                     </div>
                                                 </div>
 

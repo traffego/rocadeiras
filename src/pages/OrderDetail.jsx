@@ -172,6 +172,7 @@ export default function OrderDetail() {
                 action: isFinished ? 'finalized' : 'moved',
                 phase: nextStep,
                 user_name: profile?.name || 'Sistema',
+                user_username: profile?.username || null,
                 user_role: profile?.role || null
             })
         } catch (e) { console.warn('log error', e) }
@@ -185,6 +186,7 @@ export default function OrderDetail() {
                 action: 'accepted',
                 phase: order.current_status,
                 user_name: profile?.name || 'Sistema',
+                user_username: profile?.username || null,
                 user_role: profile?.role || null
             })
             queryClient.invalidateQueries(['os_logs', id])
@@ -342,7 +344,18 @@ export default function OrderDetail() {
                                                  log.action === 'moved' ? 'MOVEU' :
                                                  log.action === 'accepted' ? 'ACEITOU' : 'FINALIZOU'}
                                             </span>
-                                            <p className="text-xs text-muted-foreground leading-snug">{formatLog(log)}</p>
+                                            <div className="min-w-0 flex-1">
+                                                <p className="text-xs text-muted-foreground leading-snug">{formatLog(log)}</p>
+                                                <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                                                    <span className="text-[11px] font-medium">{log.user_name}</span>
+                                                    {log.user_username && (
+                                                        <span className="text-[11px] text-muted-foreground">@{log.user_username}</span>
+                                                    )}
+                                                    {log.user_role && (
+                                                        <span className="text-[10px] px-1 py-0.5 rounded bg-muted text-muted-foreground">{log.user_role}</span>
+                                                    )}
+                                                </div>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
@@ -365,6 +378,7 @@ export default function OrderDetail() {
                                         action: 'moved',
                                         phase: 'washing',
                                         user_name: profile?.name || 'Sistema',
+                                        user_username: profile?.username || null,
                                         user_role: profile?.role || null
                                     })
                                     queryClient.invalidateQueries(['os_logs', id])

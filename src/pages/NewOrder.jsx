@@ -280,6 +280,7 @@ export default function NewOrder() {
                     action: 'created',
                     phase: orderData.current_status,
                     user_name: profile?.name || 'Sistema',
+                    user_username: profile?.username || null,
                     user_role: profile?.role || null
                 })
             } catch (logErr) { console.warn('Log error:', logErr) }

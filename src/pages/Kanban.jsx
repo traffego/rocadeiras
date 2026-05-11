@@ -302,6 +302,7 @@ export default function Kanban() {
                 action: isFinished ? 'finalized' : 'moved',
                 phase: variables.newStatus,
                 user_name: profile?.name || 'Sistema',
+                user_username: profile?.username || null,
                 user_role: profile?.role || null
             }).catch(e => console.warn('log error', e))
         }
