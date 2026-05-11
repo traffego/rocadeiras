@@ -34,3 +34,23 @@ export function AdminRoute({ children }) {
 
     return children
 }
+
+export function ManagerRoute({ children }) {
+    const { user, profile, loading } = useAuth()
+    const location = useLocation()
+
+    if (loading) {
+        return <div className="min-h-screen flex items-center justify-center">Carregando...</div>
+    }
+
+    if (!user) {
+        return <Navigate to="/login" state={{ from: location }} replace />
+    }
+
+    const allowed = profile?.role === 'admin' || profile?.role === 'gerente'
+    if (!allowed) {
+        return <Navigate to="/" replace />
+    }
+
+    return children
+}

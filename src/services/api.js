@@ -541,6 +541,25 @@ export const api = {
                 .single()
             if (error) throw error
             return data
+        },
+        getAll: async ({ action, user, from, to } = {}) => {
+            let query = supabase
+                .from('os_logs')
+                .select(`
+                    *,
+                    service_orders!inner(order_number)
+                `)
+                .order('created_at', { ascending: false })
+                .limit(500)
+
+            if (action) query = query.eq('action', action)
+            if (user) query = query.ilike('user_name', `%${user}%`)
+            if (from) query = query.gte('created_at', from)
+            if (to) query = query.lte('created_at', to)
+
+            const { data, error } = await query
+            if (error) throw error
+            return data
         }
     }
 }

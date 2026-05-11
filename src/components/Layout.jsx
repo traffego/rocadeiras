@@ -19,6 +19,7 @@ import {
     ChevronRight,
     UserCircle,
     ShieldCheck,
+    History as HistoryIcon,
 } from 'lucide-react'
 import { ROLE_LABELS, ROLE_COLORS } from '@/lib/roles'
 import { Button } from '@/components/ui/button'
@@ -155,6 +156,11 @@ export default function Layout() {
                         {isAdmin && (
                             <NavLink to="/users" className={navLinkClass} onClick={closeAll}>
                                 <ShieldCheck className="h-5 w-5" /> Usuários
+                            </NavLink>
+                        )}
+                        {(isAdmin || profile?.role === 'gerente') && (
+                            <NavLink to="/activity-log" className={navLinkClass} onClick={closeAll}>
+                                <HistoryIcon className="h-5 w-5" /> Log de Atividades
                             </NavLink>
                         )}
                     </nav>
