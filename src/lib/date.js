@@ -8,10 +8,19 @@ const LOCALE = 'pt-BR'
 
 /**
  * Formata uma data/string ISO como dd/mm/aaaa no fuso SP.
- * Ex: formatDate('2024-01-15T02:00:00Z') → '14/01/2024'
+ *
+ * ATENÇÃO: datas puras do Postgres ("2026-05-11") são interpretadas pelo JS
+ * como UTC midnight. Em UTC-3 isso vira 10/05 21:00 → dia errado.
+ * Para esse caso extraímos as partes direto, sem passar pelo Date object.
  */
 export function formatDate(value) {
     if (!value) return '—'
+    // Data pura sem hora: extrair partes diretamente
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        const [y, m, d] = value.split('-')
+        return `${d}/${m}/${y}`
+    }
+    // Timestamp com hora: aplicar timezone SP
     return new Date(value).toLocaleDateString(LOCALE, {
         timeZone: TZ,
         day: '2-digit',
