@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
+import { formatDate } from '@/lib/date'
 import {
     PlusCircle,
     Search,
@@ -203,7 +204,7 @@ export default function Dashboard() {
                                             <div className="text-right hidden md:block">
                                                 <div className="text-sm font-medium">Entrada</div>
                                                 <div className="text-sm text-muted-foreground">
-                                                    {new Date(order.entry_date).toLocaleDateString('pt-BR')}
+                                                    {formatDate(order.entry_date)}
                                                 </div>
                                             </div>
 

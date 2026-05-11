@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { formatDateTime } from '@/lib/date'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
     ArrowLeft,
@@ -143,10 +144,7 @@ export default function OrderDetail() {
     const phaseLabel = (phase) => statusConfig[phase]?.label || phase || ''
     const formatLog = (log) => {
         const num = order.order_number?.toString().padStart(4, '0') || '0000'
-        const d = new Date(log.created_at)
-        const date = d.toLocaleDateString('pt-BR')
-        const time = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-        const suffix = `— ${date} às ${time}`
+        const suffix = `— ${formatDateTime(log.created_at)}`
         switch (log.action) {
             case 'created':   return `OS #${num} cadastrada por ${log.user_name} ${suffix}`
             case 'moved':     return `OS #${num} movida para [${phaseLabel(log.phase)}] por ${log.user_name} ${suffix}`

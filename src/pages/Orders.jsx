@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
+import { formatDate } from '@/lib/date'
 import { api } from '@/services/api'
 import {
     Search,
@@ -176,7 +177,7 @@ export default function Orders() {
                                             <TableCell>
                                                 <div className="flex items-center gap-2 text-sm">
                                                     <Calendar className="h-3 w-3 text-muted-foreground" />
-                                                    {new Date(order.entry_date).toLocaleDateString('pt-BR')}
+                                                    {formatDate(order.entry_date)}
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-right">

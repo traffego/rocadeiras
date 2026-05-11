@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useCallback } from 'react'
+import { formatDate } from '@/lib/date'
 import {
     DndContext,
     DragOverlay,
@@ -170,7 +171,7 @@ function SortableTask({ order, columns, onMove, zoom }) {
                         #{order.order_number}
                     </span>
                     <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                        {new Date(order.entry_date).toLocaleDateString('pt-BR')}
+                        {formatDate(order.entry_date)}
                     </span>
                 </div>
 

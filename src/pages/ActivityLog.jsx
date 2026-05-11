@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { formatDateTime, formatTime, formatDateLong } from '@/lib/date'
 import { Link } from 'react-router-dom'
 import {
     History,
@@ -35,10 +36,7 @@ const PHASE_LABELS = {
     finished:  'Finalizada',
 }
 
-const fmtDate = (iso) => {
-    const d = new Date(iso)
-    return d.toLocaleDateString('pt-BR') + ' às ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-}
+const fmtDate = (iso) => formatDateTime(iso)
 
 const buildMessage = (log) => {
     const num = log.service_orders?.order_number?.toString().padStart(4, '0') || '????'
@@ -98,7 +96,7 @@ export default function ActivityLogPage() {
     const grouped = useMemo(() => {
         const groups = {}
         filtered.forEach(log => {
-            const day = new Date(log.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
+            const day = formatDateLong(log.created_at)
             if (!groups[day]) groups[day] = []
             groups[day].push(log)
         })
@@ -225,7 +223,7 @@ export default function ActivityLogPage() {
                                                 <div className="flex-1 min-w-0">
                                                     <p className="text-sm font-medium">{buildMessage(log)}</p>
                                                     <p className="text-xs text-muted-foreground mt-0.5">
-                                                        {new Date(log.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                                        {formatTime(log.created_at)}
                                                     </p>
                                                 </div>
 
