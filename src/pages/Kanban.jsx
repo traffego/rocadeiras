@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo, useRef, useCallback } from 'react'
 import {
     DndContext,
     DragOverlay,
@@ -308,6 +308,10 @@ export default function Kanban() {
         }
     })
 
+    const handleMove = useCallback((orderId, newStatus) => {
+        updateOrderStatusMutation.mutate({ orderId, newStatus })
+    }, [updateOrderStatusMutation])
+
     // Sensors
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -473,7 +477,7 @@ export default function Kanban() {
                                 column={col}
                                 orders={orders.filter(o => o.current_status === col.slug)}
                                 columns={columns}
-                                onMove={(orderId, newStatus) => updateOrderStatusMutation.mutate({ orderId, newStatus })}
+                                onMove={handleMove}
                                 zoom={zoom}
                             />
                         ))}

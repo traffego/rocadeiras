@@ -79,7 +79,7 @@ export const api = {
 
     // Service Orders
     orders: {
-        list: async () => {
+        list: async ({ limit = 200 } = {}) => {
             const { data, error } = await supabase
                 .from('service_orders')
                 .select(`
@@ -90,6 +90,7 @@ export const api = {
           equipment_model_data:models(id, name)
         `)
                 .order('entry_date', { ascending: false })
+                .limit(limit)
             if (error) throw error
             return data
         },
